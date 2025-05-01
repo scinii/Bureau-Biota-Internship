@@ -1,6 +1,6 @@
 library(openxlsx)
 
-setwd('C:\\Users\\rober\\Desktop\\Internship') # set working directory
+setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 samples_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
 
