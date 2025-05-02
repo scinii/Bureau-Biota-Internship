@@ -98,14 +98,15 @@ get_data = function(lake_codes = all_lakes_codes,year_codes = all_years_codes){
   return(data_code)
 }
 
-
 cca_data <- function(year_code){
   
-  # Description: This function provides the dataframe to be used in the cca function
-  #              of the vegan package
+  # Description: This function provides the two dataframes that are used in the 
+  #              cca function of the vegan package
   # Args:
   #       year_code: which year you want to consider
-  # Return: the dataframe we wanted
+  # Return: a list of two dataframe. The first one contains the counts for the
+  #         the different Taxas. The second one contains the value relative to
+  #         the environmental variables.
   
   year_data <- get_data(,year_code)
   
@@ -117,6 +118,7 @@ cca_data <- function(year_code){
               .groups = "drop"
             )  |> 
             pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0)
+  
   cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
   
 
