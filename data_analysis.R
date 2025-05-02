@@ -1,16 +1,20 @@
 library(openxlsx)
 library(dplyr)
 library(tidyr)
+library(vegan)
 
 #### keep concentration rather than counts as the volume is different ####
 
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 variables_of_interest = c("Location", "Year",	"pH",	"DO",	"Conductivity",	"Temperature",	"Depth",	"Drought",	"Name",	"Taxa",	"Count", "Concentration")
+numeric_variables = c("pH",	"DO",	"Conductivity",	"Temperature", "Depth", "Drought", "Count", "Concentration")
 
 full_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
 
 samples_data <- full_data[variables_of_interest]
+
+samples_data[numeric_variables] <- sapply(samples_data[numeric_variables], as.numeric)
 
 all_years_codes <- unique(samples_data$Year)
 all_lakes_codes <- unique(samples_data$Location)
@@ -117,14 +121,23 @@ cca_data <- function(year_code){
               Concentration = sum(Concentration),
               .groups = "drop"
             )  |> 
-            pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0)
+            pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0) |> as.data.frame()
   
   cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
+  rownames(cca_df) <- cca_df$Location
+  cca_df$Location <- NULL
   
 
   env_df <- subset(taxa_df, select = -c(Rotifera, Cladocera,Copepoda))
   env_df <- env_df[!duplicated(env_df),]
+  rownames(env_df) <- env_df$Location
+  env_df$Location <- NULL
 
-    
   return(list(cca_df,env_df))
 }
+
+#example = cca_data("2020")
+
+#data_non_env = example[[1]]
+#data_env = example[[2]]
+#yolo = cca(data_non_env ~ pH+DO+Conductivity+Temperature, data = data_env)
