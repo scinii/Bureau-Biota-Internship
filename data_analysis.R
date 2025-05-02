@@ -1,8 +1,16 @@
 library(openxlsx)
+library(dplyr)
+library(tidyr)
+
+#### keep concentration rather than counts as the volume is different ####
 
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
-samples_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
+variables_of_interest = c("Location", "Year",	"pH",	"DO",	"Conductivity",	"Temperature",	"Depth",	"Drought",	"Name",	"Taxa",	"Count", "Concentration")
+
+full_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
+
+samples_data <- full_data[variables_of_interest]
 
 all_years_codes <- unique(samples_data$Year)
 all_lakes_codes <- unique(samples_data$Location)
@@ -53,8 +61,7 @@ code_in_list <- function(list_codes, sample_code, which_code){
   
 }
 
-
-get_data = function(lake_codes = all_lakes_codes ,year_codes = all_years_codes){
+get_data = function(lake_codes = all_lakes_codes,year_codes = all_years_codes){
   
   # Description: This function slice the dataframe according to the 
   #              lakes and years we want.
@@ -89,4 +96,33 @@ get_data = function(lake_codes = all_lakes_codes ,year_codes = all_years_codes){
   data_code <- data_code[year_loc,]
   
   return(data_code)
+}
+
+
+cca_data <- function(year_code){
+  
+  # Description: This function provides the dataframe to be used in the cca function
+  #              of the vegan package
+  # Args:
+  #       year_code: which year you want to consider
+  # Return: the dataframe we wanted
+  
+  year_data <- get_data(,year_code)
+  
+  
+  taxa_df <- year_data|> 
+            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Taxa) |>
+            summarise(
+              Concentration = sum(Concentration),
+              .groups = "drop"
+            )  |> 
+            pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0)
+  cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
+  
+
+  env_df <- subset(taxa_df, select = -c(Rotifera, Cladocera,Copepoda))
+  env_df <- env_df[!duplicated(env_df),]
+
+    
+  return(list(cca_df,env_df))
 }
