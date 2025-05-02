@@ -7,17 +7,28 @@ library(vegan)
 
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
-variables_of_interest = c("Location", "Year",	"pH",	"DO",	"Conductivity",	"Temperature",	"Depth",	"Drought",	"Name",	"Taxa",	"Count", "Concentration")
-numeric_variables = c("pH",	"DO",	"Conductivity",	"Temperature", "Depth", "Drought", "Count", "Concentration")
+variables_of_interest = c("Location", "Year",	"pH",	"DO",	"Conductivity",	
+                          "Temperature",	"Depth",	"Drought",	"Name",	"Taxa"
+                          ,	"Count", "Concentration")
+
+numeric_variables = c("pH",	"DO",	"Conductivity",	"Temperature", "Depth"
+                      , "Drought", "Count", "Concentration")
 
 full_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
+location_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
 
 samples_data <- full_data[variables_of_interest]
 
+samples_data <- merge(samples_data,location_data,by="Location") # add lat and lon
+
+
 samples_data[numeric_variables] <- sapply(samples_data[numeric_variables], as.numeric)
 
+
 all_years_codes <- unique(samples_data$Year)
+
 all_lakes_codes <- unique(samples_data$Location)
+
 
 code_in_list <- function(list_codes, sample_code, which_code){
   
@@ -116,7 +127,7 @@ cca_data <- function(year_code){
   
   
   taxa_df <- year_data|> 
-            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Taxa) |>
+            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Taxa, lat, lon) |>
             summarise(
               Concentration = sum(Concentration),
               .groups = "drop"
@@ -136,8 +147,21 @@ cca_data <- function(year_code){
   return(list(cca_df,env_df))
 }
 
-#example = cca_data("2020")
+cca_plot <- function(year_code, rhs_formula_string){
+  
+  data <- cca_data(year_code)
+  data_non_env <- data[[1]]
+  data_env <- data[[2]]
+  
+  formula_cca <- as.formula(paste("data_non_env ~", rhs_formula_string))
+  
+  analysis <- cca(formula_cca, data = data_env)
+  
+  plot(analysis)
+  
+}
 
-#data_non_env = example[[1]]
-#data_env = example[[2]]
-#yolo = cca(data_non_env ~ pH+DO+Conductivity+Temperature, data = data_env)
+
+####### CCA ######
+
+#cca_plot("","pH+Conductivity")
