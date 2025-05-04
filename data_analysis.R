@@ -24,6 +24,15 @@ samples_data <- merge(samples_data,location_data,by="Location") # add lat and lo
 
 samples_data[numeric_variables] <- sapply(samples_data[numeric_variables], as.numeric)
 
+samples_data = st_as_sf(samples_data, coords = c("lon", "lat"), crs = 3995)
+samples_data = st_transform(samples_data, 32633)
+
+coord = as.data.frame(st_coordinates(samples_data))
+samples_data$lon = coord$X
+samples_data$lat = coord$Y
+samples_data$geometry = NULL
+
+
 
 all_years_codes <- unique(samples_data$Year)
 

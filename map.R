@@ -1,13 +1,15 @@
 library(openxlsx) 
 library(sf)
 library(ggOceanMaps)
+library(ggspatial)
+library(ggrepel)
 
-setwd('C:\\Users\\rober\\Desktop\\Internship') # set working directory
+setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 lakes_location = read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
-#lakes_location_sf = st_as_sf(lakes_location, coords=c("lon","lat"))
-lakes_trans = transform_coord(lakes_location)
-lakes_trans$ID = lakes_location$ID
 
-basemap(limits = c(10,13,78.8,79.2), crs = 3995) + 
- geom_point(data = lakes_trans, aes(x = lon, y = lat, color = ID))
+
+basemap(limits = c(11.5, 13, 78.8, 79),shapefiles = "Svalbard") + 
+  theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
+  geom_spatial_point(data = lakes_location, aes(x = lon, y = lat), color='red') + 
+  geom_spatial_text_repel(data = lakes_location, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) 
