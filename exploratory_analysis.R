@@ -1,43 +1,70 @@
-library(openxlsx)
-library(dplyr)
+library(openxlsx) # Open Excel files
+library(dplyr) 
 library(tidyr)
-library(vegan)
+library(vegan) # Perform CCA
+library(sf) # Spatial Dataframes
+library(ggplot2) 
+library(corrplot) # Make Correlation Plots
+library(usdm) # Package to calculate Variance Inflation Factor
 
-#### keep concentration rather than counts as the volume is different ####
 
-setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
+# Set working directory
+setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') 
 
-variables_of_interest = c("Location", "Year",	"pH",	"DO",	"Conductivity",	
-                          "Temperature",	"Depth",	"Drought",	"Name",	"Taxa"
-                          ,	"Count", "Concentration")
 
-numeric_variables = c("pH",	"DO",	"Conductivity",	"Temperature", "Depth"
-                      , "Drought", "Count", "Concentration")
+# Names of columns we want to study
+variables_of_interest <- c("Location", "Year",	"pH",	"DO",	"Conductivity","Temperature",
+                           "Depth",	"Drought",	"Name",	"Taxa","Concentration")
+numeric_variables <- c("pH",	"DO",	"Conductivity",	"Temperature", "Depth",
+                      "Drought", "Concentration")
 
-full_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[1:604,]
+
+# Load data
 location_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
-
-samples_data <- full_data[variables_of_interest]
-
-samples_data <- merge(samples_data,location_data,by="Location") # add lat and lon
+lakes_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[variables_of_interest]
 
 
-samples_data[numeric_variables] <- sapply(samples_data[numeric_variables], as.numeric)
-
-samples_data = st_as_sf(samples_data, coords = c("lon", "lat"), crs = 3995)
-samples_data = st_transform(samples_data, 32633)
-
-coord = as.data.frame(st_coordinates(samples_data))
-samples_data$lon = coord$X
-samples_data$lat = coord$Y
-samples_data$geometry = NULL
+# Data cleaning
+lakes_data[numeric_variables] <- sapply(lakes_data[numeric_variables], as.numeric)
+lakes_data <- na.omit(lakes_data)
 
 
+# merge data and covert to spatial object
+used_data <- merge(lakes_data,location_data,by="Location") |> st_as_sf(coords = c("lon", "lat"), crs = 3995)
+            #st_transform(32633)
 
-all_years_codes <- unique(samples_data$Year)
 
-all_lakes_codes <- unique(samples_data$Location)
+# Extract coordinates
+coord <- as.data.frame(st_coordinates(used_data)) 
+used_data$lon <- coord$X
+used_data$lat <- coord$Y
+used_data$geometry <- NULL
 
+
+# Extract all year and lake codes
+all_years_codes <- unique(used_data$Year)
+all_lakes_codes <- unique(used_data$Location)
+
+
+get_correlations = function(df,cols){
+  
+  # Description: creates a correlation plot and calculates 
+  #              the Variance Inflation Factor (vif)
+  #               
+  # Args:
+  #       df: dataframe of interest
+  #       cols: columns that we want to include in our analysis
+  #
+  # Return: NA
+  
+  # Set colors and plot the correlation matrix
+  col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+  cPlot = corrplot(cor(df[cols]), method="color", col=col(200), type="upper",
+          order="hclust", addCoef.col = "black", tl.col="black", tl.srt=45, diag=FALSE)
+  
+  # Calculate vif
+  vif(df[cols])
+}
 
 code_in_list <- function(list_codes, sample_code, which_code){
   
@@ -136,7 +163,7 @@ cca_data <- function(year_code){
   
   
   taxa_df <- year_data|> 
-            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Taxa, lat, lon) |>
+            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Drought, Taxa, lat, lon) |>
             summarise(
               Concentration = sum(Concentration),
               .groups = "drop"
@@ -146,7 +173,6 @@ cca_data <- function(year_code){
   cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
   rownames(cca_df) <- cca_df$Location
   cca_df$Location <- NULL
-  
 
   env_df <- subset(taxa_df, select = -c(Rotifera, Cladocera,Copepoda))
   env_df <- env_df[!duplicated(env_df),]
@@ -158,7 +184,7 @@ cca_data <- function(year_code){
 
 cca_plot <- function(year_code, rhs_formula_string){
   
-  # Description: This function performs cca and make the ordination plot
+  # Description: This fgetunction performs cca and make the ordination plot
   #              
   # Args:
   #       year_code: which year you want to consider
@@ -179,6 +205,11 @@ cca_plot <- function(year_code, rhs_formula_string){
 }
 
 
-####### CCA ######
 
-#cca_plot("","pH+Conductivity")
+
+#yr = "2024"
+#con_ph = cca_plot(yr,"Conductivity + pH")
+#ph_coord = cca_plot(yr,"pH + lon + lat")
+#con_coord = cca_plot(yr,"Conductivity + lon + lat")
+#con_ph_coord = cca_plot(yr,"Conductivity + pH  + lon + lat")
+
