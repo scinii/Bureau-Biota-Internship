@@ -46,7 +46,7 @@ all_years_codes <- unique(used_data$Year)
 all_lakes_codes <- unique(used_data$Location)
 
 
-get_correlations = function(df,cols){
+get_correlations <- function(df,cols){
   
   # Description: creates a correlation plot and calculates 
   #              the Variance Inflation Factor (vif)
@@ -59,7 +59,7 @@ get_correlations = function(df,cols){
   
   # Set colors and plot the correlation matrix
   col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-  cPlot = corrplot(cor(df[cols]), method="color", col=col(200), type="upper",
+  cPlot <- corrplot(cor(df[cols]), method="color", col=col(200), type="upper",
           order="hclust", addCoef.col = "black", tl.col="black", tl.srt=45, diag=FALSE)
   
   # Calculate vif
@@ -68,14 +68,13 @@ get_correlations = function(df,cols){
 
 code_in_list <- function(list_codes, sample_code, which_code){
   
-  # TODO: specify what the codes can be !!!! 
   # Description: This function checks if there is an element of list_codes 
   #              (a string) that is contained in the string sample_code
   # Args:
-  #       list_codes: list of codes
-  #       sample_code: reference string for checking
+  #       list_codes: list of codes.
+  #       sample_code: reference string for checking.
   #       which_code: "loc" if we are identifying the Lake.
-  #                   "year" if we are identifying the Year
+  #                   "year" if we are identifying the Year.
   # Return: TRUE if there is such element. FALSE otherwise
   
   in_list <- FALSE
@@ -109,36 +108,44 @@ code_in_list <- function(list_codes, sample_code, which_code){
   }
 
   return(in_list)
-  
 }
 
-get_data = function(lake_codes = all_lakes_codes,year_codes = all_years_codes){
+get_data = function(df,year_codes = all_years_codes,lake_codes = all_lakes_codes){
   
   # Description: This function slice the dataframe according to the 
   #              lakes and years we want.
   # Args:
+  #       df: dataframe of interest
   #       lake_codes: list of codes that specify the lakes
   #       year_codes: list of codes that specify the years
   # Return: the dataframe we wanted
   
   # LOCATION SELECTION
   
+  # location of codes of interest (for slicing)
   code_loc <- c()
   
-  for(i in 1:length(samples_data$Location)){
+  for(i in 1:length(df$Location)){
     
-    if( code_in_list(lake_codes, samples_data$Location[i], "loc") == TRUE){
+    # use custom function code_in_list() in order to check if the i-th
+    # location is contained in the list lake_codes
+    
+    if(code_in_list(lake_codes, df$Location[i], "loc") == TRUE){
       code_loc <- append(code_loc, i)
     }
   }
   
-  data_code <- samples_data[code_loc,]
+  data_code <- df[code_loc,]
   
   # YEAR SELECTION
   
+  # location of years of interest (for slicing)
   year_loc <- c()
   
   for(i in 1:length(data_code$Year)){
+      
+    # use custom function code_in_list() in order to check if the i-th
+    # year is contained in the list lake_codes
     
     if( code_in_list(year_codes, data_code$Year[i], "year") == TRUE){
       year_loc <- append(year_loc, i)
@@ -149,17 +156,18 @@ get_data = function(lake_codes = all_lakes_codes,year_codes = all_years_codes){
   return(data_code)
 }
 
-cca_data <- function(year_code){
+cca_data <- function(df,year_code){
   
   # Description: This function provides the two dataframes that are used in the 
   #              cca function of the vegan package
   # Args:
+  #       df: dataframe to be partitioned
   #       year_code: which year you want to consider
   # Return: a list of two dataframe. The first one contains the counts for the
   #         the different Taxas. The second one contains the value relative to
   #         the environmental variables.
   
-  year_data <- get_data(,year_code)
+  year_data <- get_data(df,year_code)
   
   
   taxa_df <- year_data|> 
@@ -182,7 +190,7 @@ cca_data <- function(year_code){
   return(list(cca_df,env_df))
 }
 
-cca_plot <- function(year_code, rhs_formula_string){
+cca_plot <- function(df,year_code, rhs_formula_string){
   
   # Description: This fgetunction performs cca and make the ordination plot
   #              
@@ -192,7 +200,7 @@ cca_plot <- function(year_code, rhs_formula_string){
   #       environmental variables you want to use)
   # Return: cca object of the vegan package.
   
-  data <- cca_data(year_code)
+  data <- cca_data(df,year_code)
   data_non_env <- data[[1]]
   data_env <- data[[2]]
   
