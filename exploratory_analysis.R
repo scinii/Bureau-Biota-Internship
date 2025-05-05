@@ -41,7 +41,7 @@ used_data$lat <- coord$Y
 used_data$geometry <- NULL
 
 
-# Extract all year and lake codes
+# Extract all years and lakes
 all_years_codes <- unique(used_data$Year)
 all_lakes_codes <- unique(used_data$Location)
 
@@ -156,7 +156,7 @@ get_data = function(df,year_codes = all_years_codes,lake_codes = all_lakes_codes
   return(data_code)
 }
 
-cca_data <- function(df,year_code){
+cca_data <- function(df,year_code, name_or_taxa){
   
   # Description: This function provides the two dataframes that are used in the 
   #              cca function of the vegan package
@@ -169,28 +169,52 @@ cca_data <- function(df,year_code){
   
   year_data <- get_data(df,year_code)
   
+  if(nrow(year_data)==0){
+    
+    return("Sorry, no data for this year")
+  }
   
-  taxa_df <- year_data|> 
-            group_by(Location, pH, DO, Conductivity, Temperature, Depth, Drought, Taxa, lat, lon) |>
-            summarise(
-              Concentration = sum(Concentration),
-              .groups = "drop"
-            )  |> 
-            pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0) |> as.data.frame()
-  
-  cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
-  rownames(cca_df) <- cca_df$Location
-  cca_df$Location <- NULL
-
-  env_df <- subset(taxa_df, select = -c(Rotifera, Cladocera,Copepoda))
-  env_df <- env_df[!duplicated(env_df),]
-  rownames(env_df) <- env_df$Location
-  env_df$Location <- NULL
-
-  return(list(cca_df,env_df))
+  if(name_or_taxa == "Taxa"){
+    
+    taxa_df <- year_data|> 
+      group_by(Location, pH, DO, Conductivity, Temperature, Depth, Drought, Taxa, lat, lon) |>
+      summarise(
+        Concentration = sum(Concentration),
+        .groups = "drop")|>
+      pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0) |> as.data.frame()
+    
+    cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
+    rownames(cca_df) <- cca_df$Location
+    cca_df$Location <- NULL
+    
+    env_df <- taxa_df %>% select(-c("Location", "Rotifera", "Cladocera","Copepoda"))
+    env_df <- env_df[!duplicated(env_df),]
+    rownames(env_df) <- env_df$Location
+    env_df$Location <- NULL
+    
+    return(list(cca_df,env_df))
+  }
+  else{
+    
+    name_df = year_data
+    name_df$Taxa = NULL
+    all_names = c("Location", unique(name_df$Name))
+    name_df = pivot_wider(name_df, names_from = Name, values_from = Concentration, values_fill = 0) |> as.data.frame()
+    cca_df <- name_df[all_names]
+    rownames(cca_df) <- cca_df$Location
+    cca_df$Location <- NULL
+    
+    env_df <- name_df %>% select(-all_of(all_names))
+    env_df <- env_df[!duplicated(env_df),]
+    rownames(env_df) <- env_df$Location
+    env_df$Location <- NULL
+    
+    
+    return(list(cca_df,env_df))
+  }
 }
 
-cca_plot <- function(df,year_code, rhs_formula_string){
+cca_plot <- function(df,year_code, name_or_taxa, rhs_formula_string){
   
   # Description: This fgetunction performs cca and make the ordination plot
   #              
@@ -200,7 +224,7 @@ cca_plot <- function(df,year_code, rhs_formula_string){
   #       environmental variables you want to use)
   # Return: cca object of the vegan package.
   
-  data <- cca_data(df,year_code)
+  data <- cca_data(df,year_code,name_or_taxa)
   data_non_env <- data[[1]]
   data_env <- data[[2]]
   
@@ -213,11 +237,4 @@ cca_plot <- function(df,year_code, rhs_formula_string){
 }
 
 
-
-
-#yr = "2024"
-#con_ph = cca_plot(yr,"Conductivity + pH")
-#ph_coord = cca_plot(yr,"pH + lon + lat")
-#con_coord = cca_plot(yr,"Conductivity + lon + lat")
-#con_ph_coord = cca_plot(yr,"Conductivity + pH  + lon + lat")
 
