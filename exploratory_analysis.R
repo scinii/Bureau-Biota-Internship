@@ -6,10 +6,11 @@ library(sf) # Spatial Dataframes
 library(ggplot2) 
 library(corrplot) # Make Correlation Plots
 library(usdm) # Package to calculate Variance Inflation Factor
-
+library(naniar) # visualize missing data
 
 # Set working directory
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') 
+
 
 
 # Names of columns we want to study
@@ -26,11 +27,11 @@ lakes_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts")[variable
 
 # Data cleaning
 lakes_data[numeric_variables] <- sapply(lakes_data[numeric_variables], as.numeric)
-lakes_data <- na.omit(lakes_data)
+used_data <- na.omit(lakes_data)
 
 
 # merge data and covert to spatial object
-used_data <- merge(lakes_data,location_data,by="Location") |> st_as_sf(coords = c("lon", "lat"), crs = 3995)
+used_data <- merge(used_data,location_data,by="Location") |> st_as_sf(coords = c("lon", "lat"), crs = 3995)
             #st_transform(32633)
 
 
@@ -120,7 +121,6 @@ get_data = function(df,year_codes = all_years_codes,lake_codes = all_lakes_codes
   #       year_codes: list of codes that specify the years
   # Return: the dataframe we wanted
   
-  # LOCATION SELECTION
   
   # location of codes of interest (for slicing)
   code_loc <- c()
@@ -137,7 +137,6 @@ get_data = function(df,year_codes = all_years_codes,lake_codes = all_lakes_codes
   
   data_code <- df[code_loc,]
   
-  # YEAR SELECTION
   
   # location of years of interest (for slicing)
   year_loc <- c()
@@ -156,15 +155,17 @@ get_data = function(df,year_codes = all_years_codes,lake_codes = all_lakes_codes
   return(data_code)
 }
 
-cca_data <- function(df,year_code, name_or_taxa){
+cca_data <- function(df ,year_code, name_or_taxa){
   
-  # Description: This function provides the two dataframes that are used in the 
-  #              cca function of the vegan package
+  # Description: 
+  #              
   # Args:
   #       df: dataframe to be partitioned
   #       year_code: which year you want to consider
+  #       order_or_genus: choose between order (Taxa) or genus (Name)
+  #
   # Return: a list of two dataframe. The first one contains the counts for the
-  #         the different Taxas. The second one contains the value relative to
+  #         the different group. The second one contains the value relative to
   #         the environmental variables.
   
   year_data <- get_data(df,year_code)
@@ -174,49 +175,59 @@ cca_data <- function(df,year_code, name_or_taxa){
     return("Sorry, no data for this year")
   }
   
-  if(name_or_taxa == "Taxa"){
+  if(name_or_taxa == "Order"){
+    
+    # Group common observation (same Taxa) and sum their concentration. Create new dataframe
+    # where the different Taxas\Orders are columns
     
     taxa_df <- year_data|> 
       group_by(Location, pH, DO, Conductivity, Temperature, Depth, Drought, Taxa, lat, lon) |>
-      summarise(
-        Concentration = sum(Concentration),
-        .groups = "drop")|>
-      pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0) |> as.data.frame()
+      summarise(Concentration = sum(Concentration),.groups = "drop")|>
+      pivot_wider(names_from = Taxa, values_from = Concentration, values_fill = 0) |> 
+      as.data.frame()
     
-    cca_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
-    rownames(cca_df) <- cca_df$Location
-    cca_df$Location <- NULL
+    # create non-environmental dataframe  
+    non_env_df <- taxa_df[c("Location", "Rotifera", "Cladocera","Copepoda")]
+    rownames(non_env_df) <- non_env_df$Location
+    non_env_df$Location <- NULL
     
+    # create environmental dataframe
     env_df <- taxa_df %>% select(-c("Location", "Rotifera", "Cladocera","Copepoda"))
     env_df <- env_df[!duplicated(env_df),]
     rownames(env_df) <- env_df$Location
     env_df$Location <- NULL
     
-    return(list(cca_df,env_df))
+    return(list(non_env_df,env_df))
   }
   else{
+    
+    #  Create new dataframe where the different Names\Genus are columns
     
     name_df = year_data
     name_df$Taxa = NULL
     all_names = c("Location", unique(name_df$Name))
-    name_df = pivot_wider(name_df, names_from = Name, values_from = Concentration, values_fill = 0) |> as.data.frame()
-    cca_df <- name_df[all_names]
-    rownames(cca_df) <- cca_df$Location
-    cca_df$Location <- NULL
+    name_df = pivot_wider(name_df, names_from = Name, values_from = Concentration, values_fill = 0) |>
+              as.data.frame()
     
+    # create non-environmental dataframe 
+    non_env_df <- name_df[all_names]
+    rownames(non_env_df) <- non_env_df$Location
+    non_env_df$Location <- NULL
+    
+    # create environmental dataframe
     env_df <- name_df %>% select(-all_of(all_names))
     env_df <- env_df[!duplicated(env_df),]
     rownames(env_df) <- env_df$Location
     env_df$Location <- NULL
     
     
-    return(list(cca_df,env_df))
+    return(list(non_env_df,env_df))
   }
 }
 
 cca_plot <- function(df,year_code, name_or_taxa, rhs_formula_string){
   
-  # Description: This fgetunction performs cca and make the ordination plot
+  # Description: This function performs cca and make the ordination plot
   #              
   # Args:
   #       year_code: which year you want to consider
@@ -236,5 +247,20 @@ cca_plot <- function(df,year_code, name_or_taxa, rhs_formula_string){
   return(analysis)
 }
 
-
+analizza = function(){
+  
+  for(i in c("2018","2019","2020","2021","2022","2023","2024")){
+    
+    df = get_data(lakes_data,i,)[c("pH","DO","Conductivity","Temperature","Depth")]
+    #print(df)
+    #print(nrow(df))
+    #print(unique(df$Location))
+    
+    if(n_var_miss(df) > 0){
+      missing2 = vis_miss(df) + ggtitle(paste("Missing data for year", i)) +
+                                theme(plot.title = element_text(hjust = 0.5))
+      print(missing2)
+    }
+  }
+}
 
