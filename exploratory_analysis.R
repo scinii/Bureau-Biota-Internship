@@ -41,26 +41,14 @@ get_community_data <- function(df){
 }
 
 
-# GET YEARLY DATA
-
-data_2024 <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = "Year 2024")
-
-split_2024_data <- get_community_data(data_2024)
-
-data_2024_comb <- split_2024_data[[1]]
-
-data_2024_conc <- split_2024_data[[2]]
-
-data_2024_env <- split_2024_data[[3]]
-
-# BUBBLE MAPS
+############ PLOTS ############
 
 plot_bubble_map <- function(df, column_names){
   
   plot_list <- vector("list", length(column_names)) 
   
   for(i in 1:4){
-     plot_list[[i]] = basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
+    plot_list[[i]] = basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
       theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
       geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_names[i]]]),color='red',shape = 1,stroke = 1.2) + 
       scale_size(range = c(2, 10)) + 
@@ -84,9 +72,45 @@ plot_bubble_map <- function(df, column_names){
 }
 
 # BUBBLE SPECIES
-plot_bubble_map(data_2024_comb,c("Macrothrix","Lecane","Chydorus","Rotifera"))
-
+#plot_bubble_map(data_2024_comb,c("Macrothrix","Lecane","Chydorus","Rotifera"))
 # BUBBLE ENV 
-plot_bubble_map(data_2024_comb,c("pH","DO","Conductivity","Temperature"))
+#plot_bubble_map(data_2024_comb,c("pH","DO","Conductivity","Temperature"))
+
+
+plot_frequency <- function(df){
+  
+  hist(apply(df > 0, 2, sum),
+       main = "Species Occurrences",
+       right = FALSE,
+       las = 1,
+       xlab = "Number of occurrences",
+       ylab = "Number of species",
+       # length(unique(df$Location)
+       breaks = seq(0, nrow(df), by = 1),
+       col = "bisque"
+  )
+}
+
+###############################
+
+
+############ GET YEARLY DATA ############
+
+data_2024 <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = "Year 2024")
+
+split_2024_data <- get_community_data(data_2024)
+
+data_2024_comb <- split_2024_data[[1]]
+
+data_2024_conc <- split_2024_data[[2]]
+
+data_2024_env <- split_2024_data[[3]]
+
+#########################################
+
+
+
+
+
 
 
