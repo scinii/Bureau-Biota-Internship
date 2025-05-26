@@ -3,12 +3,14 @@ library(dplyr)
 library(tidyr)
 library(vegan)
 library(ggplot2)
-library(sf)
+#library(sf)
 library(ggOceanMaps)
 library(ggspatial)
-library(ggrepel)
-library(patchwork)
+#library(ggrepel)
+#library(patchwork)
 
+
+setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 get_community_data <- function(df){
   
@@ -43,39 +45,27 @@ get_community_data <- function(df){
 
 ############ PLOTS ############
 
-plot_bubble_map <- function(df, column_names){
+plot_bubble_map <- function(df, column_name){
   
-  plot_list <- vector("list", length(column_names)) 
-  
-  for(i in 1:4){
-    plot_list[[i]] = basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
-      theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
-      geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_names[i]]]),color='red',shape = 1,stroke = 1.2) + 
-      scale_size(range = c(2, 10)) + 
-      scale_x_continuous(
-        name = "Longitude",
-        breaks = seq(11.5, 12.7, by = 0.3),
-        expand = c(0, 0)
-      ) +
-      scale_y_continuous(
-        name = "Latitude",
-        breaks = seq(78.85, 79.0, by = 0.05), 
-        expand = c(0, 0)
-      ) + 
-      ggtitle( paste(column_names[i])  ) + 
-      theme(
-        plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
-      )
-  }
-  combined = ( plot_list[[1]] | plot_list[[2]]) / (plot_list[[3]] | plot_list[[4]])
-  return(combined)
+  basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
+    theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
+    geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_name]]),color='red',shape = 1,stroke = 1.2) + 
+    scale_size(range = c(2, 10)) + 
+    scale_x_continuous(
+      name = "Longitude",
+      breaks = seq(11.5, 12.7, by = 0.3),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+    name = "Latitude",
+    breaks = seq(78.85, 79.0, by = 0.05), 
+    expand = c(0, 0)
+    ) + 
+    ggtitle( paste(column_name)  ) + 
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    ) 
 }
-
-# BUBBLE SPECIES
-#plot_bubble_map(data_2024_comb,c("Macrothrix","Lecane","Chydorus","Rotifera"))
-# BUBBLE ENV 
-#plot_bubble_map(data_2024_comb,c("pH","DO","Conductivity","Temperature"))
-
 
 plot_frequency <- function(df){
   
@@ -91,22 +81,44 @@ plot_frequency <- function(df){
   )
 }
 
-###############################
 
 
 ############ GET YEARLY DATA ############
 
-data_2024 <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = "Year 2024")
+which_year = "Year 2020"
 
-split_2024_data <- get_community_data(data_2024)
+data_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
-data_2024_comb <- split_2024_data[[1]]
+split_yearly_data <- get_community_data(data_yearly)
 
-data_2024_conc <- split_2024_data[[2]]
+data_yearly_comb <- split_yearly_data[[1]]
 
-data_2024_env <- split_2024_data[[3]]
+data_yearly_conc <- split_yearly_data[[2]]
 
-#########################################
+data_yearly_env <- split_yearly_data[[3]]
+
+
+############ PLOTS ############
+
+# BUBBLE SPECIES
+plot_bubble_map(data_yearly_comb,"Macrothrix")
+# BUBBLE ENV 
+#plot_bubble_map(data_2024_comb,"pH")
+# BUBBLE RICHNESS
+#plot_bubble_map(data_2024_comb,"Richness")
+
+
+############ CORRELATIONS ############
+
+
+
+
+
+
+############ DCA ############
+dca_yearly = decorana(data_yearly_conc, ira = 0) 
+
+
 
 
 
