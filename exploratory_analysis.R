@@ -57,10 +57,7 @@ get_community_data <- function(df, which_group){
 
 ############ PLOTS FUNCTIONS ############
 
-missing_data <- function(df, which_vars, year){
-  
-  print(length(unique(df$Location)))
-  print(nrow(df))
+missing_data <- function(df, which_vars){
   
   if(which_vars == 'env'){
     df = df[c('pH','DO','Conductivity','Temperature','Depth','Drought')]
@@ -70,7 +67,7 @@ missing_data <- function(df, which_vars, year){
   }
   
   if(n_var_miss(df) > 0){
-    missing2 = vis_miss(df) + ggtitle(paste("Missing data for year", year)) +
+    missing2 = vis_miss(df) + #ggtitle(paste("Missing data for year", year)) +
     theme(plot.title = element_text(hjust = 0.5))
     print(missing2)
   }
@@ -115,9 +112,10 @@ plot_frequency <- function(df){
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2024"
+which_year = "Year 2018"
 
 data_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
+
 
 split_yearly_data <- get_community_data(data_yearly)
 
