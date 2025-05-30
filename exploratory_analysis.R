@@ -1,6 +1,7 @@
 library(openxlsx) # Open Excel files
 library(dplyr) 
 library(tidyr)
+library(plyr)
 library(vegan) 
 library(ggplot2)
 library(ggOceanMaps) # Svalbard's Map
@@ -13,9 +14,9 @@ setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set work
 
 ############ CONTINGECY TABLES FUNCTION ############
 
-#Species, Genus, Order, Class, Phylum
+#Species, Genus, Family, Order, Class, Phylum
 
-get_community_data <- function(df){
+get_community_data <- function(df, which_group){
   
   # Description: 
   #              
@@ -24,30 +25,37 @@ get_community_data <- function(df){
   # Return: a list of two dataframe. The first one contains the counts for the
   #         the different group. The second one contains the value relative to
   #         the environmental variables.
-    
-  df$Taxa = NULL
-  all_names = c("Location", unique(df$Name))
-  df = pivot_wider(df, names_from = Name, values_from = Concentration, values_fill = 0) |>
+  
+  var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
+                  'Depth', 'Drought', 'Concentration', which_group)
+  
+  df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
+  var_to_summ = var_to_keep[var_to_keep != 'Concentration'] 
+  df = ddply(df, var_to_summ, summarize, Concentration = mean(Concentration))
+  
+  all_names = c("Location") %>% append(unique(df[[which_group]]))
+  
+  
+  df = pivot_wider(df, names_from = which_group, values_from = Concentration, values_fill = 0) |>
       as.data.frame()
-    
+
   # create non-environmental dataframe 
-  non_env_df <- df[all_names]
+  non_env_df <- df %>% select(all_of(all_names))
   rownames(non_env_df) <- non_env_df$Location
   non_env_df$Location <- NULL
-    
+
+  
   # create environmental dataframe
   env_df <- df %>% select(-all_of(all_names))
   env_df <- env_df[!duplicated(env_df),]
   rownames(env_df) <- env_df$Location
   env_df$Location <- NULL
     
-    
   return(list(df,non_env_df,env_df))
 }
 
 
 ############ PLOTS FUNCTIONS ############
-
 
 missing_data <- function(df, which_vars, year){
   
