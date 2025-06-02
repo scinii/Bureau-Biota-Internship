@@ -27,7 +27,7 @@ get_community_data <- function(df, which_group){
   #         the environmental variables.
   
   var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
-                  'Depth', 'Drought', 'Concentration', which_group)
+                  'Depth', 'Drought', 'Concentration', 'lat','lon',which_group)
   
   df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
   var_to_summ = var_to_keep[var_to_keep != 'Concentration'] 
@@ -54,6 +54,21 @@ get_community_data <- function(df, which_group){
   return(list(df,non_env_df,env_df))
 }
 
+diversity_table <- function(df){
+  
+  data_conc = df[,4:ncol(df)]
+  N0 <- rowSums(data_conc>0)
+  N1 <- exp( diversity(data_conc, index = "shannon") )
+  N2 <- diversity(data_conc, index="invsimpson")
+  E1 <- N1 / N0
+  E2 <- N2 / N0
+  diversity <- data.frame(N0,N1,N2,E1,E2)
+  diversity$lat = df$lat
+  diversity$lon = df$lon
+  diversity$Location = df$Location
+  return(diversity)
+  
+}
 
 ############ PLOTS FUNCTIONS ############
 
@@ -63,11 +78,11 @@ missing_data <- function(df, which_vars){
     df = df[c('pH','DO','Conductivity','Temperature','Depth','Drought')]
   }
   else{
-    df = df[c('Genus', 'Family', 'Order', 'Class', 'Phylum')]
+    df = df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
   }
   
   if(n_var_miss(df) > 0){
-    missing2 = vis_miss(df) + #ggtitle(paste("Missing data for year", year)) +
+    missing2 = vis_miss(df) +
     theme(plot.title = element_text(hjust = 0.5))
     print(missing2)
   }
@@ -77,7 +92,8 @@ plot_bubble_map <- function(df, column_name){
   
   basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
-    geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_name]]),color='red',shape = 1,stroke = 1.2) + 
+    geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_name]]),color='white', shape = 21, fill='red', stroke=0.5) + 
+    geom_spatial_text_repel(data = df, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) + 
     scale_size(range = c(2, 10)) + 
     scale_x_continuous(
       name = "Longitude",
@@ -112,12 +128,11 @@ plot_frequency <- function(df){
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2018"
+which_year = "Year 2024"
 
 data_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
-
-split_yearly_data <- get_community_data(data_yearly)
+split_yearly_data <- get_community_data(data_yearly, 'Genus')
 
 data_yearly_comb <- split_yearly_data[[1]]
 
@@ -125,7 +140,18 @@ data_yearly_conc <- split_yearly_data[[2]]
 
 data_yearly_env <- split_yearly_data[[3]]
 
+
+# Diversities
+
+div_2024 =  diversity_table(data_yearly_comb[,c(1,8:27)])
+
 ############ PLOTS ############
+
+
+## MISSING DATA
+#missing_data(data_yearly,'env')
+#missing_data(data_yearly, 'groups')
+
 
 # BUBBLE SPECIES
 #plot_bubble_map(data_yearly_comb,"Macrothrix")
@@ -138,13 +164,10 @@ data_yearly_env <- split_yearly_data[[3]]
 ############ CORRELATIONS ############
 
 bray_curtis_diss = vegdist(log1p(data_yearly_conc), method = "bray")
-chisq_diss = vegdist(log1p(data_yearly_conc), method = "chisq")
 
 corrplot(as.matrix(bray_curtis_diss), is.corr = FALSE, method = 'color',
          col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
-corrplot(as.matrix(chisq_diss), is.corr = FALSE, method = 'color',
-         col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
 
 ############ DCA ############
