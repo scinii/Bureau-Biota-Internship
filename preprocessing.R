@@ -6,13 +6,15 @@ library(tidyr)
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') 
 
 numeric_variables <- c("Year","pH",	"DO",	"Conductivity",	"Temperature", "Depth",
-                       "Drought", "Concentration")
+                       "Drought", "Counts")
 
 location_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
 lakes_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts") %>%
               select(-'Name',-'Taxa') %>%
               merge(location_data,by="Location")
 lakes_data[numeric_variables] <- sapply(lakes_data[numeric_variables], as.numeric)
+lakes_data$C100L = NULL
+
 
 split_yearly_data <- function(df){
   

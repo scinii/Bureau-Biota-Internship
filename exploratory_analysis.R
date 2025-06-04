@@ -27,16 +27,16 @@ get_community_data <- function(df, which_group){
   #         the environmental variables.
   
   var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
-                  'Depth', 'Drought', 'Concentration', 'lat','lon',which_group)
+                  'Depth', 'Drought', 'Counts', 'lat','lon',which_group)
   
   df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
-  var_to_summ = var_to_keep[var_to_keep != 'Concentration'] 
-  df = ddply(df, var_to_summ, summarize, Concentration = mean(Concentration))
+  var_to_summ = var_to_keep[var_to_keep != 'Counts'] 
+  df = ddply(df, var_to_summ, summarize, Counts = mean(Counts))
   
   all_names = c("Location") %>% append(unique(df[[which_group]]))
   
   
-  df = pivot_wider(df, names_from = which_group, values_from = Concentration, values_fill = 0) |>
+  df = pivot_wider(df, names_from = which_group, values_from = Counts, values_fill = 0) |>
       as.data.frame()
 
   # create non-environmental dataframe 
@@ -69,6 +69,17 @@ diversity_table <- function(df){
   return(diversity)
   
 }
+
+cca_plot <- function(data_non_env, data_env, rhs_formula_string){
+
+  formula_cca <- as.formula(paste("data_non_env ~", rhs_formula_string))
+  
+  analysis <- cca(formula_cca, data = data_env)
+  
+  plot(analysis)
+  return(analysis)
+}
+
 
 ############ PLOTS FUNCTIONS ############
 
