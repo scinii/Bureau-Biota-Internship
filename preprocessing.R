@@ -15,8 +15,10 @@ lakes_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts") %>%
 lakes_data[numeric_variables] <- sapply(lakes_data[numeric_variables], as.numeric)
 lakes_data$C100L = NULL
 
-
 split_yearly_data <- function(df){
+  
+  "This function split the data by year and saves each yearly data
+  in a separate excel sheet (but same file)"
   
   wb <- createWorkbook()
   
@@ -38,9 +40,3 @@ split_yearly_data <- function(df){
   saveWorkbook(wb, file = 'yearly_data.xlsx', overwrite = TRUE)
   
 }
-
-
-
-
-
-
