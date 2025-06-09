@@ -30,7 +30,7 @@ get_community_data <- function(df, which_group){
   #         the environmental variables.
   
   var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
-                  'Depth', 'Drought', 'Counts', 'lat','lon',which_group)
+                  'Depth', 'Drought', 'Counts', 'lat','lon','alt',which_group)
   
   df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
   var_to_summ = var_to_keep[var_to_keep != 'Counts'] 
@@ -52,6 +52,8 @@ get_community_data <- function(df, which_group){
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
+  env_df$alt = NULL
+  env_df$Depth = NULL
   env_df$lat = NULL
   env_df$lon = NULL
     
