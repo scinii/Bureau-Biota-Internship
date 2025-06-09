@@ -116,6 +116,10 @@ cor.test (~ pH + Conductivity, data = zoo_env.z)
 
 
 
+################# PARTIAL RDA #############
+
+
+rda(zoo_spe.hel, informed_vars, moran)
 
 ##################### VARIATION PARTITIONING ##############################
 
