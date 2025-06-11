@@ -4,7 +4,7 @@ source('utils.R')
 library(adespatial)
 library(vegan3d)
 
- ### VERY EXPLORATORY STUFF ####
+### VERY EXPLORATORY STUFF ####
 
 #missing_data(data_yearly,'env')
 #missing_data(data_yearly, 'groups')
@@ -107,7 +107,7 @@ triplot = function(){
          lty = 1,
          col = "red"
   )
-    
+  
 }
 
 informed_pca = rda(zoo_spe.hel) # 57.35%
