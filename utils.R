@@ -33,6 +33,7 @@ get_community_data <- function(df, which_group){
                   'Depth', 'Drought', 'Counts', 'lat','lon','alt',which_group)
   
   df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
+  
   var_to_summ = var_to_keep[var_to_keep != 'Counts'] 
   df = ddply(df, var_to_summ, summarize, Counts = sum(Counts))
   
@@ -40,15 +41,14 @@ get_community_data <- function(df, which_group){
   
   df = pivot_wider(df, names_from = which_group, values_from = Counts, values_fill = 0) |>
       as.data.frame()
-
+  
   # create non-environmental dataframe 
-  non_env_df <- df %>% select(all_of(all_names))
+  non_env_df = dplyr::select(df,all_of(all_names))
   rownames(non_env_df) <- df$Location
   
-
   # create environmental dataframe
-  env_df <- df %>% select(-all_of(all_names))
-  env_df <- env_df[!duplicated(env_df),]
+  env_df <- dplyr::select(df, -all_of(all_names))
+  #env_df <- env_df[!duplicated(env_df),]
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
@@ -98,10 +98,11 @@ missing_data <- function(df, which_vars){
 }
 
 plot_bubble_map <- function(df, column_name){
-  
+
   basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
-    geom_spatial_point(data = df, aes(x = lon, y = lat, size = .data[[column_name]]),color='white', shape = 21, fill='red', stroke=0.5) + 
+    geom_spatial_point(data = df, aes(x = lon, y = lat, fill=.data[[column_name]]),color="white",shape = 24, size = 5, stroke=0.5) +
+    scale_fill_distiller(palette = "Reds", direction = 1) + 
     geom_spatial_text_repel(data = df, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) + 
     scale_size(range = c(2, 10)) + 
     scale_x_continuous(
