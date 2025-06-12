@@ -143,6 +143,41 @@ plot_frequency <- function(df){
   )
 }
 
+plot_rda <- function(model, scaling_number){
+  
+  plot(model,
+       scaling = scaling_number,
+       display = c("sp", "lc", "cn"),
+       main = paste("Informed RDA - Scaling", scaling_number)
+       
+  )
+  
+  if(scaling_number == 1){
+    spe.sc1 <- scores(model, choices = 1:2, scaling = 1,display = "sp")
+    arrows(0, 0,
+           spe.sc1[, 1] * 0.9,
+           spe.sc1[, 2] * 0.9,
+           length = 0,
+           lty = 1,
+           col = "red")
+      
+  }
+  else{
+    spe.sc2 <- scores(model, scaling = 2,choices = 1:2,display = "sp")
+    arrows(0, 0,
+           spe.sc2[, 1] * 0.9,
+           spe.sc2[, 2] * 0.9,
+           length = 0,
+           lty = 1,
+           col = "red"
+    )
+  }
+  
+  
+}
+  
+  
+
 
 
 
