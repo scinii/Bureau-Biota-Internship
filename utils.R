@@ -16,7 +16,7 @@ library(sf)
 library(ggOceanMaps)
 library(ggspatial)
 library(ggrepel)
-
+library(sf)
 
 
 get_community_data <- function(df, which_group){
@@ -78,13 +78,21 @@ diversity_table <- function(df){
   
 }
 
-
 ############ PLOTS FUNCTIONS ############
 
+lakes_map <- function(){
+  
+  lakes_location = read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
+  basemap(limits = c(11.5, 12.8, 78.8, 79),shapefiles = "Svalbard") + 
+    theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
+    geom_spatial_point(data = lakes_location, aes(x = lon, y = lat), color='red') + 
+    geom_spatial_text_repel(data = lakes_location, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) 
+}
+  
 missing_data <- function(df, which_vars){
   
   if(which_vars == 'env'){
-    df = df[c('pH','DO','Conductivity','Temperature','Depth','Drought')]
+    df = df[c('pH','DO','Conductivity','Temperature','Depth')]
   }
   else{
     df = df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
