@@ -30,7 +30,7 @@ get_community_data <- function(df, which_group){
   #         the environmental variables.
   
   var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
-                  'Depth', 'Drought', 'Counts', 'lat','lon','alt',which_group)
+                  'Depth', 'Drought', 'Counts', 'lat','lon','Altitude',which_group)
   
   df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
   
@@ -52,7 +52,7 @@ get_community_data <- function(df, which_group){
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
-  env_df$alt = NULL
+  env_df$Altitude = NULL
   env_df$Depth = NULL
   env_df$lat = NULL
   env_df$lon = NULL
@@ -86,13 +86,24 @@ lakes_map <- function(){
   basemap(limits = c(11.5, 12.8, 78.8, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
     geom_spatial_point(data = lakes_location, aes(x = lon, y = lat), color='red') + 
-    geom_spatial_text_repel(data = lakes_location, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) 
+    geom_spatial_text_repel(data = lakes_location, aes(x = lon, y = lat, label = Location), max.overlaps = Inf)+
+    scale_size(range = c(2, 10)) + 
+    scale_x_continuous(
+      name = "Longitude",
+      breaks = seq(11.5, 12.7, by = 0.3),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      name = "Latitude",
+      breaks = seq(78.85, 79.0, by = 0.05), 
+      expand = c(0, 0)
+    )  
 }
   
 missing_data <- function(df, which_vars){
   
   if(which_vars == 'env'){
-    df = df[c('pH','DO','Conductivity','Temperature','Depth')]
+    df = df[c('pH','DO','Conductivity','Temperature')]
   }
   else{
     df = df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
@@ -111,6 +122,7 @@ plot_bubble_map <- function(df, column_name){
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
     geom_spatial_point(data = df, aes(x = lon, y = lat, fill=.data[[column_name]]),color="white",shape = 24, size = 5, stroke=0.5) +
     scale_fill_distiller(palette = "Reds", direction = 1) + 
+    labs(fill = paste(column_name)) + 
     geom_spatial_text_repel(data = df, aes(x = lon, y = lat, label = Location), max.overlaps = Inf) + 
     scale_size(range = c(2, 10)) + 
     scale_x_continuous(
@@ -122,10 +134,6 @@ plot_bubble_map <- function(df, column_name){
     name = "Latitude",
     breaks = seq(78.85, 79.0, by = 0.05), 
     expand = c(0, 0)
-    ) + 
-    ggtitle( paste(column_name)  ) + 
-    theme(
-      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
     ) 
 }
 

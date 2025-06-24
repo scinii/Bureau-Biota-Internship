@@ -1,12 +1,7 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 source('utils.R')
 library(memisc)
-
-
-
-# IDEAS
-
-# 1) Altitude and draught
+library(adespatial)
 
 
 ############ GET YEARLY DATA ############
@@ -35,6 +30,7 @@ zoo_spe.hel <- decostand(zoo_spe, "hellinger")
 
 #### MISSING DATA ####
 
+# DONE
 missing_data(zoo_yearly,'env')
 missing_data(zoo_yearly, 'groups')
 
@@ -47,7 +43,7 @@ plot_bubble_map(zoo_community, "Conductivity")
 plot_bubble_map(zoo_community, "Temperature")
 plot_bubble_map(zoo_community, "DO")
 plot_bubble_map(zoo_community, "Depth")
-plot_bubble_map(zoo_community, "alt")
+plot_bubble_map(zoo_community, "Altitude")
 
 
 
@@ -58,8 +54,11 @@ corrplot(cor(zoo_env), is.corr = FALSE, method = 'color',
 
 
 bray_curtis_diss = vegdist(log1p(zoo_spe), method = "bray")
+hellinger_diss = dist(zoo_spe.hel)
 
 corrplot(as.matrix(bray_curtis_diss), is.corr = FALSE, method = 'color',
+         col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
+corrplot(as.matrix(hellinger_diss), is.corr = FALSE, method = 'color',
          col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
 
