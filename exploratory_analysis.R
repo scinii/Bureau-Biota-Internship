@@ -1,7 +1,6 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 source('utils.R')
-library(memisc)
-library(adespatial)
+
 
 
 ############ GET YEARLY DATA ############
@@ -22,7 +21,7 @@ zoo_env <- zoo_dataframes[[3]]
 
 #zoo_3d <- zoo_community[c('alt', 'Depth')]
 
-#zoo_env.z <- decostand(zoo_env, method = "standardize")
+zoo_env.z <- decostand(zoo_env, method = "standardize")
 
 zoo_spe.hel <- decostand(zoo_spe, "hellinger")
 
@@ -33,6 +32,16 @@ zoo_spe.hel <- decostand(zoo_spe, "hellinger")
 # DONE
 missing_data(zoo_yearly,'env')
 missing_data(zoo_yearly, 'groups')
+
+
+
+#### BOX PLOT ####
+
+zoo_env.z %>% gather(key="EnvVar", value = "Val") %>%
+  ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
+  geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
+  labs(x = "Environmental Variables", y="Standardized Value")
+
 
 
 
