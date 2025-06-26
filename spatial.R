@@ -1,7 +1,7 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 source('utils.R')
-library(adespatial)
+
 
 
 ############ GET YEARLY DATA ############
@@ -18,10 +18,44 @@ zoo_spe <- zoo_dataframes[[2]]
 
 zoo_env <- zoo_dataframes[[3]]
 
-zoo_spat <- zoo_community[c('lat','lon','alt', 'Depth')]
+zoo_xy <- zoo_community[c('lat','lon')]
+
+zoo_xy = st_as_sf(zoo_xy,coords = c('lon','lat'), crs=4326)
+
+zoo_xy = st_transform(zoo_xy , crs = 3995)
 
 zoo_env.z <- decostand(zoo_env, method = "standardize")
 zoo_spe.hel <- decostand(zoo_spe, "hellinger")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ################# PARTIAL RDA #############

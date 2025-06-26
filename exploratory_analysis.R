@@ -3,11 +3,15 @@ source('utils.R')
 
 
 
+
 ############ GET YEARLY DATA ############
 
 which_year = "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
+
+split_rotifers_arthropodas(zoo_yearly, 'Genus')
+
 
 zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
 
@@ -21,9 +25,16 @@ zoo_env <- zoo_dataframes[[3]]
 
 #zoo_3d <- zoo_community[c('alt', 'Depth')]
 
-zoo_env.z <- decostand(zoo_env, method = "standardize")
+zoo_env.z <- decostand(zoo_env, method = "standardize", MARGIN = 2)
 
 zoo_spe.hel <- decostand(zoo_spe, "hellinger")
+
+
+zoo_env.f = zoo_env
+zoo_env.f$DO = NULL
+zoo_env.f$Conductivity = log(zoo_env$Conductivity)
+zoo_env.f$Temperature = log(zoo_env$Temperature)
+
 
 
 
@@ -38,6 +49,11 @@ missing_data(zoo_yearly, 'groups')
 #### BOX PLOT ####
 
 zoo_env.z %>% gather(key="EnvVar", value = "Val") %>%
+  ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
+  geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
+  labs(x = "Environmental Variables", y="Standardized Value")
+
+zoo_env.f %>% gather(key="EnvVar", value = "Val") %>%
   ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
   geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
   labs(x = "Environmental Variables", y="Standardized Value")

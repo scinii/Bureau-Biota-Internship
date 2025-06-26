@@ -17,19 +17,60 @@ library(ggOceanMaps)
 library(ggspatial)
 library(ggrepel)
 library(sf)
+library(adespatial)
+
 
 library(memisc)
-library(adespatial)
+
+
+
+#### SPECIES FUNCTIONS #####
+
+split_rotifers_arthropodas <- function(df, which_group){
+  
+  
+  vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature','Depth', 'Drought', 'Counts', 'lat','lon','Altitude')
+  
+  
+  vars_rotifers = c(vars, 'Phylum')
+  rotifers = df[df$Phylum == "Rotifera",][vars_rotifers]
+  rotifers = ddply(rotifers, vars_rotifers[vars_rotifers != 'Counts'] , summarize, Counts = sum(Counts))
+  rotifers = rename(rotifers, Phylum = Taxa)
+  
+  
+  vars_arthropodas = c(vars, which_group)
+  arthropodas = df[!df$Phylum == "Rotifera",][vars_arthropodas] %>% drop_na(all_of(which_group))
+  arthropodas = ddply(arthropodas, vars_arthropodas[vars_arthropodas != 'Counts'], summarize, Counts = sum(Counts))
+  arthropodas = rename(arthropodas, Genus = Taxa)
+  
+  df = rbind(rotifers, arthropodas)
+  
+  
+  all_names = unique(df$Taxa)
+  
+  df = pivot_wider(df, names_from = Taxa, values_from = Counts, values_fill = 0) |>
+    as.data.frame()
+  
+  
+  non_env_df = dplyr::select(df,all_of(all_names))
+  rownames(non_env_df) <- df$Location
+  
+  # create environmental dataframe
+  env_df <- dplyr::select(df, -all_of(all_names))
+  rownames(env_df) <- df$Location
+  env_df$Location = NULL
+  env_df$Drought = NULL
+  env_df$Altitude = NULL
+  env_df$Depth = NULL
+  env_df$lat = NULL
+  env_df$lon = NULL
+  
+  return(list(df,non_env_df,env_df))
+  
+}
 
 get_community_data <- function(df, which_group){
   
-  # Description: 
-  #              
-  # Args:
-  #       df: dataframe to be partitioned
-  # Return: a list of two dataframe. The first one contains the counts for the
-  #         the different group. The second one contains the value relative to
-  #         the environmental variables.
   
   var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
                   'Depth', 'Drought', 'Counts', 'lat','lon','Altitude',which_group)
@@ -162,6 +203,23 @@ plot_rda <- function(model){
 }
   
   
+##### TRANSFORMATIONS ######
+
+
+box_cox_trans <- function(raw_matrix, lambda){
+  
+  if(lambda == 0){
+    transformed_data = log1p(raw_matrix)
+  }
+  else{
+    transformed_data = raw_matrix ** lambda
+  }
+  
+  transformed_data = decostand(transformed_data, "normalize")
+  
+  return (transformed_data)
+  
+}
 
 
 
