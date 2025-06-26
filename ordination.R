@@ -41,19 +41,22 @@ zoo_spe.trans = box_cox_trans(zoo_spe, 0.15)
 
 
 # FULL MODEL
-full_rda = rda(zoo_spe.trans~ Conductivity + pH  + Temperature, data=zoo_env.f)
+full_rda = rda(zoo_spe.trans ~ Conductivity + pH  + Temperature, data=zoo_env.f)
 
 summary(full_rda)
 anova.cca(full_rda, step=9999)
 anova.cca(full_rda, step=9999,by="term" )
 anova.cca(full_rda, step=9999,by="axis")
 
-sel_infromed.fs = forward.sel(Y = zoo_spe.hel, X = zoo_env.f , adjR2thresh =  RsquareAdj(full_rda)$r.squared, nperm = 49999, alpha = 0.2)
+# sel_infromed.fs = forward.sel(Y = zoo_spe.hel, X = zoo_env.f , adjR2thresh =  RsquareAdj(full_rda)$r.squared, nperm = 49999, alpha = 0.2)
 
 
 plot_rda(full_rda)
-spe_pca = rda(zoo_spe.hel)
-p_max_explainable_var = RsquareAdj(full_rda)$r.squared / sum(spe_pca$CA$eig[1:3])
+
+spe_pca = rda(zoo_spe.trans)
+
+
+p_max_explainable_var = RsquareAdj(full_rda)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
 
 
 
