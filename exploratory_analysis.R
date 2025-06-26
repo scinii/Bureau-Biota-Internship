@@ -87,7 +87,7 @@ corrplot(as.matrix(hellinger_diss), is.corr = FALSE, method = 'color',
          col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
 
-div_2024 =  diversity_table(zoo_community[,c(1,8:27)])
+div_2024 =  diversity_table(zoo_community[,c(1,8,9,11:15)])
 #plot_bubble_map(div_2024, "N0")
 plot_bubble_map(div_2024, "N1")
 #plot_bubble_map(div_2024, "N2")

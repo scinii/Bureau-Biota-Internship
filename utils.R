@@ -256,7 +256,6 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
   legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain","Tradeoff"), fill= c("red","blue","green"))
   
   
-  
   return( lambdas[which.max(variance_tradeoff)] )
 }
   
