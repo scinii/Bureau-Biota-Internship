@@ -24,20 +24,24 @@ zoo_env <- zoo_dataframes[[3]]
 
 dca = decorana(zoo_spe, ira = 0) 
 
-lambda = 1 
-zoo_spe.trans = box_cox_trans(zoo_spe, lambda)
-
-
 zoo_env.f = zoo_env
 zoo_env.f$DO = NULL
 zoo_env.f$Conductivity = log(zoo_env$Conductivity)
 zoo_env.f$Temperature = log(zoo_env$Temperature)
 
 
+
+
 ###### RDA ######
 
+
+max_var_box_cox(zoo_spe, zoo_env.f,0.01)
+
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.15)
+
+
 # FULL MODEL
-full_rda = rda(zoo_spe.logchord~ Conductivity + pH  + Temperature, data=zoo_env.f)
+full_rda = rda(zoo_spe.trans~ Conductivity + pH  + Temperature, data=zoo_env.f)
 
 summary(full_rda)
 anova.cca(full_rda, step=9999)
@@ -48,7 +52,6 @@ sel_infromed.fs = forward.sel(Y = zoo_spe.hel, X = zoo_env.f , adjR2thresh =  Rs
 
 
 plot_rda(full_rda)
-
 spe_pca = rda(zoo_spe.hel)
 p_max_explainable_var = RsquareAdj(full_rda)$r.squared / sum(spe_pca$CA$eig[1:3])
 

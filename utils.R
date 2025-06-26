@@ -224,7 +224,32 @@ box_cox_trans <- function(raw_matrix, lambda){
 
 
 
-
+max_var_box_cox <- function(raw_matrix, env_matrix, increment){
+  
+  
+  lambdas = seq(0,1,increment)
+  
+  variances = vector( "numeric" , length(lambdas) )
+  
+  for(i in 1:length(lambdas)){
+    
+    transformed_data = box_cox_trans(raw_matrix, lambdas[i])
+    
+    rda_model = rda(transformed_data ~ Conductivity + pH  + Temperature, env_matrix)
+    
+    summary(rda_model)
+    
+    variances[i] = RsquareAdj(rda_model)$r.squared
+    
+  }
+  
+  plot(lambdas,variances)
+  
+  return( lambdas[which.max(variances)] )
+}
+  
+  
+  
 
 
 
