@@ -251,7 +251,7 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
   plot(lambdas, max_variances)
   
   
-  variance_tradeoff = 0.5*variances + 0.5*max_variances
+  variance_tradeoff = (2/3)*variances + (1/3)*max_variances
   
   
   return( lambdas[which.max(variance_tradeoff)] )
