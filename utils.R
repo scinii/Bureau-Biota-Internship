@@ -247,11 +247,14 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
     
   }
   
-  plot(lambdas,variances)
-  plot(lambdas, max_variances)
-  
-  
   variance_tradeoff = (2/3)*variances + (1/3)*max_variances
+  
+  plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
+  points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
+  points(lambdas, variance_tradeoff, , type = "p", bg="green", pch = 21, col = "green")
+  
+  legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain","Tradeoff"), fill= c("red","blue","green"))
+  
   
   
   return( lambdas[which.max(variance_tradeoff)] )
