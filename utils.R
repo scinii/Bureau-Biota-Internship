@@ -230,6 +230,7 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
   lambdas = seq(0,1,increment)
   
   variances = vector( "numeric" , length(lambdas) )
+  max_variances = vector( "numeric" , length(lambdas) )
   
   for(i in 1:length(lambdas)){
     
@@ -237,15 +238,23 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
     
     rda_model = rda(transformed_data ~ Conductivity + pH  + Temperature, env_matrix)
     
-    summary(rda_model)
+    pca_model = rda(transformed_data)
+    
     
     variances[i] = RsquareAdj(rda_model)$r.squared
+    
+    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:3]) / sum(pca_model$CA$eig[1:5]) )
     
   }
   
   plot(lambdas,variances)
+  plot(lambdas, max_variances)
   
-  return( lambdas[which.max(variances)] )
+  
+  variance_tradeoff = 0.5*variances + 0.5*max_variances
+  
+  
+  return( lambdas[which.max(variance_tradeoff)] )
 }
   
   

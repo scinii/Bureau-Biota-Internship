@@ -37,7 +37,7 @@ zoo_env.f$Temperature = log(zoo_env$Temperature)
 
 max_var_box_cox(zoo_spe, zoo_env.f,0.01)
 
-zoo_spe.trans = box_cox_trans(zoo_spe, 0.15)
+zoo_spe.trans = box_cox_trans(zoo_spe, max_var_box_cox(zoo_spe, zoo_env.f,0.01))
 
 
 # FULL MODEL
