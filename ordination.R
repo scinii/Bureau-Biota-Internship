@@ -34,10 +34,10 @@ zoo_env.f$Temperature = log(zoo_env$Temperature)
 
 ###### RDA ######
 
+sensitivity_analysis(zoo_spe, zoo_env.f)
+max_var_box_cox(zoo_spe, zoo_env.f, 0.3, TRUE)
 
-max_var_box_cox(zoo_spe, zoo_env.f,0.01)
-
-zoo_spe.trans = box_cox_trans(zoo_spe, max_var_box_cox(zoo_spe, zoo_env.f,0.01))
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.19)
 
 
 # FULL MODEL

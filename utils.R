@@ -224,10 +224,10 @@ box_cox_trans <- function(raw_matrix, lambda){
 
 
 
-max_var_box_cox <- function(raw_matrix, env_matrix, increment){
+max_var_box_cox <- function(raw_matrix, env_matrix, w_var ,plot_bool){
   
   
-  lambdas = seq(0,1,increment)
+  lambdas = seq(0,1,0.01)
   
   variances = vector( "numeric" , length(lambdas) )
   max_variances = vector( "numeric" , length(lambdas) )
@@ -247,18 +247,42 @@ max_var_box_cox <- function(raw_matrix, env_matrix, increment){
     
   }
   
-  variance_tradeoff = (2/3)*variances + (1/3)*max_variances
   
-  plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
-  points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
-  points(lambdas, variance_tradeoff, , type = "p", bg="green", pch = 21, col = "green")
+  w_max_var = 1 - w_var 
   
-  legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain","Tradeoff"), fill= c("red","blue","green"))
+  variance_tradeoff = w_var*variances + w_max_var*max_variances
+  
+  if(plot_bool == TRUE){
+    
+    plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
+    points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
+    points(lambdas, variance_tradeoff, , type = "p", bg="green", pch = 21, col = "green")
+    
+    legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain","Tradeoff"), fill= c("red","blue","green"))
+    
+  }
   
   
   return( lambdas[which.max(variance_tradeoff)] )
 }
+
+
+
+sensitivity_analysis <- function(raw_matrix, env_matrix){
   
+  w_var = seq(0,1,0.01)
+  best_lambdas = vector( "numeric" , length(w_var) )
+  
+  for(i in 1:length(w_var)){
+    
+    best_lambdas[i] = max_var_box_cox(raw_matrix, env_matrix, w_var[i], FALSE)
+    
+  }
+  
+  plot(w_var,best_lambdas, ylab = "Value of best lambda", xlab = "Weigth for variance", type = "p", bg="red", pch = 21, col = "red")
+  
+  return(mean(best_lambdas))
+}
   
   
 
