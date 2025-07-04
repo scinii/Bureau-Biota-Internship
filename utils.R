@@ -3,7 +3,7 @@ library(openxlsx) # Open Excel files
 library(dplyr) 
 library(tidyr)
 library(plyr)
-
+library(DescTools)
 library(vegan) # ordination functions
 
 # plots
@@ -224,10 +224,10 @@ box_cox_trans <- function(raw_matrix, lambda){
 
 
 
-max_var_box_cox <- function(raw_matrix, env_matrix, w_var ,plot_bool){
+max_var_box_cox <- function(raw_matrix, expl_matrix,variables, w_var ,plot_bool){
   
   
-  lambdas = seq(0,1,0.01)
+  lambdas = seq(0,1,0.05)
   
   variances = vector( "numeric" , length(lambdas) )
   max_variances = vector( "numeric" , length(lambdas) )
@@ -236,31 +236,32 @@ max_var_box_cox <- function(raw_matrix, env_matrix, w_var ,plot_bool){
     
     transformed_data = box_cox_trans(raw_matrix, lambdas[i])
     
-    rda_model = rda(transformed_data ~ Conductivity + pH  + Temperature, env_matrix)
+    
+    formula <- as.formula(paste("transformed_data", paste(variables, collapse = " + "), sep = " ~ "))
+    
+    rda_model = rda(formula, expl_matrix)
     
     pca_model = rda(transformed_data)
     
     
     variances[i] = RsquareAdj(rda_model)$r.squared
     
-    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:3]) / sum(pca_model$CA$eig[1:5]) )
+    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:3]) / sum(pca_model$CA$eig[1:length(pca_model$CA$eig)]) )
     
   }
   
-  
-  w_max_var = 1 - w_var 
-  
-  variance_tradeoff = w_var*variances + w_max_var*max_variances
   
   if(plot_bool == TRUE){
     
     plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
     points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
-    points(lambdas, variance_tradeoff, , type = "p", bg="green", pch = 21, col = "green")
-    
-    legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain","Tradeoff"), fill= c("red","blue","green"))
+    legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain"), fill= c("red","blue"), bg="transparent")
     
   }
+  
+  w_max_var = 1 - w_var 
+  
+  variance_tradeoff = w_var*variances + w_max_var*max_variances
   
   
   return( lambdas[which.max(variance_tradeoff)] )
@@ -268,20 +269,20 @@ max_var_box_cox <- function(raw_matrix, env_matrix, w_var ,plot_bool){
 
 
 
-sensitivity_analysis <- function(raw_matrix, env_matrix){
+sensitivity_analysis <- function(raw_matrix, env_matrix, variables){
   
-  w_var = seq(0,1,0.01)
+  w_var = seq(0,1,0.05)
   best_lambdas = vector( "numeric" , length(w_var) )
   
   for(i in 1:length(w_var)){
     
-    best_lambdas[i] = max_var_box_cox(raw_matrix, env_matrix, w_var[i], FALSE)
+    best_lambdas[i] = max_var_box_cox(raw_matrix, env_matrix, variables, w_var[i], FALSE)
     
   }
   
   plot(w_var,best_lambdas, ylab = "Value of best lambda", xlab = "Weigth for variance", type = "p", bg="red", pch = 21, col = "red")
   
-  return(mean(best_lambdas))
+  return(Mode(best_lambdas))
 }
   
   

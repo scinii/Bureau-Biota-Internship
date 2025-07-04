@@ -1,19 +1,16 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
-source('utils.R')
 
+source('utils.R')
 
 
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2024"
+which_year = "Year 2020"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
-split_rotifers_arthropodas(zoo_yearly, 'Genus')
-
-
-zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
+zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
 
 zoo_community <- zoo_dataframes[[1]]
 
@@ -21,37 +18,35 @@ zoo_spe <- zoo_dataframes[[2]]
 
 zoo_env <- zoo_dataframes[[3]]
 
-#zoo_2d <- zoo_community[c('lat','lon')]
 
-#zoo_3d <- zoo_community[c('alt', 'Depth')]
 
-zoo_env.z <- decostand(zoo_env, method = "standardize", MARGIN = 2)
 
-zoo_spe.hel <- decostand(zoo_spe, "hellinger")
-
+#### DATA TRANSFORMATION  ####
 
 zoo_env.f = zoo_env
+
 zoo_env.f$DO = NULL
+
 zoo_env.f$Conductivity = log(zoo_env$Conductivity)
+
 zoo_env.f$Temperature = log(zoo_env$Temperature)
 
 
+sensitivity_analysis(zoo_spe, zoo_env.f)
+
+max_var_box_cox(zoo_spe, zoo_env.f, 0.3, TRUE)
+
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.5)
 
 
 #### MISSING DATA ####
 
-# DONE
+
 missing_data(zoo_yearly,'env')
 missing_data(zoo_yearly, 'groups')
 
 
-
 #### BOX PLOT ####
-
-zoo_env.z %>% gather(key="EnvVar", value = "Val") %>%
-  ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
-  geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
-  labs(x = "Environmental Variables", y="Standardized Value")
 
 zoo_env.f %>% gather(key="EnvVar", value = "Val") %>%
   ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
@@ -74,17 +69,14 @@ plot_bubble_map(zoo_community, "Altitude")
 
 ############ CORRELATIONS ############
 
-corrplot(cor(zoo_env), is.corr = FALSE, method = 'color',
+corrplot(cor(zoo_env.f), is.corr = FALSE, method = 'color',
          col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
 
-bray_curtis_diss = vegdist(log1p(zoo_spe), method = "bray")
-hellinger_diss = dist(zoo_spe.hel)
+corrplot(as.matrix(vegdist(zoo_spe, method = "bray")), is.corr = FALSE, method = 'color',
+         col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
-corrplot(as.matrix(bray_curtis_diss), is.corr = FALSE, method = 'color',
-         col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
-corrplot(as.matrix(hellinger_diss), is.corr = FALSE, method = 'color',
-         col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
+
 
 
 div_2024 =  diversity_table(zoo_community[,c(1,8,9,11:15)])
