@@ -3,8 +3,11 @@ library(openxlsx) # Open Excel files
 library(dplyr) 
 library(tidyr)
 library(plyr)
-library(DescTools)
+
+library(DescTools) # statistical package
 library(vegan) # ordination functions
+library(memisc) # missing data
+# source("cleanplot.pca.R") # plots PCA
 
 # plots
 library(ggplot2)
@@ -19,25 +22,28 @@ library(ggrepel)
 library(sf)
 library(adespatial)
 
-
-library(memisc)
-
-
-
-#### SPECIES FUNCTIONS #####
-
 split_rotifers_arthropodas <- function(df, which_group){
   
+  "
+  :param df: dataframe that contains the vars (see below) columns. 
+  :param which_group: which group of the arthropodas to keep.  
+  :return: Three dataframes where each row corresponds to a lake. 
+           - non_env_dataframe has as columns the different groups of arthropodas
+                               and one for rotifers (the counts have been aggregated)
+           - env_dataframe has as columns the environmental variables pH, DO, Conductivity and Temperature
+           - df's columns are the ones of the two dataframes just mentioned plus Depth, Drought, lat, lon and Altitude
+  "
   
   vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature','Depth', 'Drought', 'Counts', 'lat','lon','Altitude')
   
   
+  # select rotifers and aggregate the counts
   vars_rotifers = c(vars, 'Phylum')
   rotifers = df[df$Phylum == "Rotifera",][vars_rotifers]
   rotifers = ddply(rotifers, vars_rotifers[vars_rotifers != 'Counts'] , summarize, Counts = sum(Counts))
   rotifers = rename(rotifers, Phylum = Taxa)
   
-  
+  # select arthropodas and aggregate the counts of common groups
   vars_arthropodas = c(vars, which_group)
   arthropodas = df[!df$Phylum == "Rotifera",][vars_arthropodas] %>% drop_na(all_of(which_group))
   arthropodas = ddply(arthropodas, vars_arthropodas[vars_arthropodas != 'Counts'], summarize, Counts = sum(Counts))
@@ -52,6 +58,7 @@ split_rotifers_arthropodas <- function(df, which_group){
     as.data.frame()
   
   
+  # create non environmental dataframe
   non_env_df = dplyr::select(df,all_of(all_names))
   rownames(non_env_df) <- df$Location
   
@@ -125,6 +132,8 @@ diversity_table <- function(df){
 
 lakes_map <- function(){
   
+  " Returns a map of the Kongsfjorden area and the location of the lakes "
+  
   lakes_location = read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
   basemap(limits = c(11.5, 12.8, 78.8, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
@@ -145,6 +154,13 @@ lakes_map <- function(){
   
 missing_data <- function(df, which_vars){
   
+  "
+  :param df: dataframe that contains the 'env' or 'taxa' variables below
+  :param which_vars: env if we want the environmental variables. Otherwise taxas are considered.
+  :return: a plot with histograms of the missing value for easy visualization.
+  
+  "
+  
   if(which_vars == 'env'){
     df = df[c('pH','DO','Conductivity','Temperature')]
   }
@@ -160,6 +176,13 @@ missing_data <- function(df, which_vars){
 }
 
 plot_bubble_map <- function(df, column_name){
+  
+  "
+  :param df: dataframe that contains longitude, latitude and the column_name
+  :param column_name: oclumn whose values we want to plot
+  :return: a plot of the Kongsfjorden area and each lake is represented by a triangle
+           (to indentify its location) and a colour associated with the values in the column
+  "
 
   basemap(limits = c(11.5, 12.7, 78.85, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
@@ -180,6 +203,42 @@ plot_bubble_map <- function(df, column_name){
     ) 
 }
 
+
+plot_ordination <- function(model, which_ordination, scaling){
+  
+  "
+  :param model: the pca or rda model
+  :param which_ordination: decide between pca or rda plots
+  :scaling: type 1 or 2
+  :return: the ordination plot with the given scaling
+  "
+  
+  if(which_ordination == "pca"){
+    
+    biplot(model, scaling = scaling)
+    
+  }
+  else{
+    
+    if(scaling == 1){
+      
+      plot(model,scaling = 1, display = c("sp", "lc", "cn"))
+      spe.sc1 <- scores(model, scaling =12,choices = 1:2,display = "sp")
+      arrows(0, 0,spe.sc1[, 1] * 0.9,spe.sc1[, 2] * 0.9,length = 0,lty = 1,col = "red")
+      
+    }
+    else{
+      
+      plot(model,scaling = 2, display = c("sp", "lc", "cn"))
+      spe.sc2 <- scores(model, scaling = 2,choices = 1:2,display = "sp")
+      arrows(0, 0,spe.sc2[, 1] * 0.9,spe.sc2[, 2] * 0.9,length = 0,lty = 1,col = "red")
+      
+    } 
+    
+    
+  }
+}
+
 plot_frequency <- function(df){
   
   hist(apply(df > 0, 2, sum),
@@ -193,20 +252,17 @@ plot_frequency <- function(df){
        col = "bisque"
   )
 }
-
-plot_rda <- function(model){
-  
-  plot(model,scaling = 2, display = c("sp", "wa", "cn"))
-  spe.sc2 <- scores(model, scaling = 2,choices = 1:2,display = "sp")
-  arrows(0, 0,spe.sc2[, 1] * 0.9,spe.sc2[, 2] * 0.9,length = 0,lty = 1,col = "red")
-
-}
-  
   
 ##### TRANSFORMATIONS ######
 
 
 box_cox_trans <- function(raw_matrix, lambda){
+  
+  "
+  :param raw_matrix: matrix of species abundance data
+  :param lambda: exponent of the box-cox transformation
+  :return: the transformed dataframe
+  "
   
   if(lambda == 0){
     transformed_data = log1p(raw_matrix)
@@ -222,10 +278,16 @@ box_cox_trans <- function(raw_matrix, lambda){
 }
 
 
-
-
-max_var_box_cox <- function(raw_matrix, expl_matrix,variables, w_var ,plot_bool){
+max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool){
   
+  "
+  :param raw_matrix: matrix of untransformed species abundance data
+  :param expl_matrix: matrix of explanatory variables
+  :param variables: list of variables to consider in the RDA model (must be in expl_matrix)
+  :param w_var: weight of the optimization problem between explained variance and fraction of variance RDA can maximally explain
+  :param plot_bool: if TRUE then the two sub-objective functions are plotted
+  :return: the lambda that maximizes the objective function.
+  "
   
   lambdas = seq(0,1,0.05)
   
@@ -269,14 +331,22 @@ max_var_box_cox <- function(raw_matrix, expl_matrix,variables, w_var ,plot_bool)
 
 
 
-sensitivity_analysis <- function(raw_matrix, env_matrix, variables){
+sensitivity_analysis <- function(raw_matrix, expl_matrix, variables){
+  
+  "
+  :param raw_matrix: matrix of untransformed species abundance data
+  :param expl_matrix: matrix of explanatory variables
+  :param variables: list of variables to consider in the RDA model (must be in expl_matrix)
+  :return: the lambda that maximizes the objective function most often (i.e. mode) for different weight of the subobjectives
+  "
+  
   
   w_var = seq(0,1,0.05)
   best_lambdas = vector( "numeric" , length(w_var) )
   
   for(i in 1:length(w_var)){
     
-    best_lambdas[i] = max_var_box_cox(raw_matrix, env_matrix, variables, w_var[i], FALSE)
+    best_lambdas[i] = max_var_box_cox(raw_matrix, expl_matrix, variables, w_var[i], FALSE)
     
   }
   

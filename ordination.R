@@ -45,7 +45,7 @@ max_var_box_cox(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature"), NA, 
 
 most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature"))
 
-zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda)
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.15)
 
 
 # FULL MODEL
