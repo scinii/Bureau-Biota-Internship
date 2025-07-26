@@ -47,18 +47,9 @@ most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.f, c("Conductivity",
 zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda)
 
 
-
-#### CORRELOGRAMS ####
-
-plot.links(zoo_xy, dist(zoo_xy),thresh = 1233.4)
-(mantelloz = mantel.correlog(vegdist(zoo_spe, method = "bray"), D.geo = dist(zoo_xy), nperm = 9999, r.type="spearman"))
-summary(mantelloz)
-plot(mantelloz)
-
-
 #### TREND SURFACE ANALYSIS ####
 
-zoo_poly = poly(as.matrix(zoo_xyz), degree = 2)
+zoo_poly = poly(as.matrix(zoo_xyz), degree = 2, raw = FALSE)
 colnames(zoo_poly) <-  c("X", "X2", "Y", "XY", "Y2", "Z","ZX", "ZY","Z2")
 (zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly)))
 
@@ -83,7 +74,12 @@ summary(mite.rda2.axis1.env)
 
 
 
+#### CORRELOGRAMS ####
 
+plot.links(zoo_xy, dist(zoo_xy),thresh = 1233.4)
+(mantelloz = mantel.correlog(vegdist(zoo_spe, method = "bray"), D.geo = dist(zoo_xy), nperm = 9999, r.type="spearman"))
+summary(mantelloz)
+plot(mantelloz)
 
 
 

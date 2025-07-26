@@ -217,21 +217,25 @@ plot_ordination <- function(model, which_ordination, scaling){
     
     biplot(model, scaling = scaling)
     
+    if(scaling == 1){
+      pcacircle(model, 1, 1)
+    }
+    
   }
   else{
     
     if(scaling == 1){
       
       plot(model,scaling = 1, display = c("sp", "lc", "cn"))
-      spe.sc1 <- scores(model, scaling =12,choices = 1:2,display = "sp")
-      arrows(0, 0,spe.sc1[, 1] * 0.9,spe.sc1[, 2] * 0.9,length = 0,lty = 1,col = "red")
-      
+      spe.sc1 <- scores(model, scaling =1,choices = 1:2,display = "sp")
+      arrows(0, 0,spe.sc1[, 1] * 0.9 ,spe.sc1[, 2] * 0.9 ,length = 0,lty = 1,col = "red")
+
     }
     else{
       
       plot(model,scaling = 2, display = c("sp", "lc", "cn"))
       spe.sc2 <- scores(model, scaling = 2,choices = 1:2,display = "sp")
-      arrows(0, 0,spe.sc2[, 1] * 0.9,spe.sc2[, 2] * 0.9,length = 0,lty = 1,col = "red")
+      arrows(0, 0,spe.sc2[, 1] ,spe.sc2[, 2] ,length = 0,lty = 1,col = "red")
       
     } 
     
