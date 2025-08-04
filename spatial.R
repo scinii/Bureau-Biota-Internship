@@ -3,6 +3,7 @@ setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set work
 source('utils.R')
 library(spdep)
 library(adegraphics)
+library(adespatial)
 
 ############ GET YEARLY DATA ############
 
@@ -18,7 +19,7 @@ zoo_spe <- zoo_dataframes[[2]]
 
 zoo_env <- zoo_dataframes[[3]]
 
-zoo_xy <- zoo_community[c('lat','lon')]
+zoo_xy <- zoo_community[c('lon','lat')]
 
 zoo_xy = st_as_sf(zoo_xy,coords = c('lon','lat'), crs=4326)
 
@@ -72,8 +73,6 @@ summary(mite.rda2.axis1.env)
 
 
 #### CORRELOGRAMS ####
-
-plot.links(zoo_xy, dist(zoo_xy),thresh = 1233.4)
 
 residualssss <- resid(lm(as.matrix(zoo_spe.trans) ~ ., data = zoo_xyz))
 
