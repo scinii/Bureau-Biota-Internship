@@ -1,7 +1,6 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 source('utils.R')
-source("plot.links.R")
 library(spdep)
 library(adegraphics)
 
@@ -10,7 +9,6 @@ library(adegraphics)
 which_year = "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
-
 
 zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
 
@@ -36,15 +34,14 @@ zoo_xyz = zoo_xy
 zoo_xyz$z = zoo_community$Altitude
 
 
-zoo_env.f = zoo_env
-zoo_env.f$DO = NULL
-zoo_env.f$Conductivity = log(zoo_env$Conductivity)
-zoo_env.f$Temperature = log(zoo_env$Temperature)
+zoo_env.t = zoo_env
+zoo_env.t$Conductivity = log(zoo_env$Conductivity)
+zoo_env.t$Temperature = log(zoo_env$Temperature)
+zoo_env.t$Depth = log(zoo_community$Depth)
 
+most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.t, c("Conductivity", "pH", "Temperature", "Depth"))
 
-most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature"))
-
-zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda)
+zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda[1])
 
 
 #### TREND SURFACE ANALYSIS ####
@@ -54,20 +51,20 @@ colnames(zoo_poly) <-  c("X", "X2", "Y", "XY", "Y2", "Z","ZX", "ZY","Z2")
 (zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly)))
 
 
-(zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.08, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
-(mite.trend.rda2 <- rda(zoo_spe.trans ~ XY + Z,
-                        data = as.data.frame(zoo_poly)))
+(zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.2, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
+(mite.trend.rda2 <- rda(zoo_spe.trans ~ .,
+                        as.data.frame(zoo_poly)[ ,zoo_rda.fwd[ ,2]] ))
 anova(mite.trend.rda2)
 anova(mite.trend.rda2, by = "axis")
 
 
 mite.trend.fit <-
   scores(mite.trend.rda2,
-         choices = 1,
+         choices = 1:2,
          display = "lc",
          scaling = 1)
 s.value(zoo_xyz, mite.trend.fit, symbol = "circle")
-mite.rda2.axis1.env <- lm(mite.trend.fit[ ,1] ~ ., data = zoo_env.f)
+mite.rda2.axis1.env <- lm(mite.trend.fit[ ,1] ~ ., data = zoo_env.t)
 shapiro.test(resid(mite.rda2.axis1.env))
 summary(mite.rda2.axis1.env)
 
@@ -77,7 +74,10 @@ summary(mite.rda2.axis1.env)
 #### CORRELOGRAMS ####
 
 plot.links(zoo_xy, dist(zoo_xy),thresh = 1233.4)
-(mantelloz = mantel.correlog(vegdist(zoo_spe, method = "bray"), D.geo = dist(zoo_xy), nperm = 9999, r.type="spearman"))
+
+residualssss <- resid(lm(as.matrix(zoo_spe.trans) ~ ., data = zoo_xyz))
+
+(mantelloz = mantel.correlog(dist(residualssss), D.geo = dist(zoo_xy), nperm = 9999, r.type="spearman"))
 summary(mantelloz)
 plot(mantelloz)
 

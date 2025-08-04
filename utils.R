@@ -15,12 +15,10 @@ library(corrplot)
 library(naniar)
 
 # spatial packages
-library(sf)
+
 library(ggOceanMaps)
 library(ggspatial)
 library(ggrepel)
-library(sf)
-library(adespatial)
 
 split_rotifers_arthropodas <- function(df, which_group){
   
@@ -67,8 +65,8 @@ split_rotifers_arthropodas <- function(df, which_group){
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
+  env_df$DO = NULL
   env_df$Altitude = NULL
-  env_df$Depth = NULL
   env_df$lat = NULL
   env_df$lon = NULL
   
@@ -103,7 +101,6 @@ get_community_data <- function(df, which_group){
   env_df$Location = NULL
   env_df$Drought = NULL
   env_df$Altitude = NULL
-  env_df$Depth = NULL
   env_df$lat = NULL
   env_df$lon = NULL
     
@@ -114,7 +111,7 @@ get_community_data <- function(df, which_group){
 diversity_table <- function(df){
   
   
-  data_conc = df[,4:ncol(df)]
+  data_conc = df[c("Rotifera","Macrothrix","Chydorus","Daphnia","Nauplius")]
   N0 <- rowSums(data_conc>0)
   N1 <- exp( diversity(data_conc, index = "shannon") )
   N2 <- diversity(data_conc, index="invsimpson")
@@ -162,7 +159,7 @@ missing_data <- function(df, which_vars){
   "
   
   if(which_vars == 'env'){
-    df = df[c('pH','DO','Conductivity','Temperature')]
+    df = df[c('pH','DO','Conductivity','Temperature','Depth')]
   }
   else{
     df = df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
@@ -235,7 +232,7 @@ plot_ordination <- function(model, which_ordination, scaling){
       
       plot(model,scaling = 2, display = c("sp", "lc", "cn"))
       spe.sc2 <- scores(model, scaling = 2,choices = 1:2,display = "sp")
-      arrows(0, 0,spe.sc2[, 1] ,spe.sc2[, 2] ,length = 0,lty = 1,col = "red")
+      arrows(0, 0,spe.sc2[, 1] * 0.9 ,spe.sc2[, 2] * 0.9 ,length = 0,lty = 1,col = "red")
       
     } 
     
@@ -321,7 +318,7 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
     
     plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
     points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
-    legend(x="topright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain"), fill= c("red","blue"), bg="transparent")
+    legend(x="bottomright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain"), fill= c("red","blue"), bg="transparent")
     
   }
   

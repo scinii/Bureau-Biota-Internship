@@ -33,7 +33,11 @@ zoo_env.f$Conductivity = log(zoo_env$Conductivity)
 zoo_env.f$Temperature = log(zoo_env$Temperature)
 zoo_env.f$Depth = log(zoo_community$Depth)
 
-shapiro.test(zoo_env$Depth)
+zoo_env.f %>% gather(key="EnvVar", value = "Val") %>%
+  ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
+  geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
+  labs(x = "Environmental Variables", y="Standardized Value")
+
 
 ###### RDA ######
 
