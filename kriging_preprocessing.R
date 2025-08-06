@@ -8,13 +8,14 @@ which_year = "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
-zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
+#zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
+zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
 
 zoo_community <- zoo_dataframes[[1]]
 
 zoo_spe <- zoo_dataframes[[2]]
 
-dt = diversity_table(zoo_spe)
+dt = diversity_table(zoo_spe, colnames(zoo_spe))
 
 data_kriging = zoo_community[,c(9,8,2,4:6,10)]
 data_kriging$Altitude = decostand(data_kriging$Altitude, method = "standardize")[1:13]

@@ -87,11 +87,11 @@ get_community_data <- function(df, which_group){
   
   all_names = unique(df[[which_group]])
   
-  df = pivot_wider(df, names_from = which_group, values_from = Counts, values_fill = 0) |>
+  df = pivot_wider(df, names_from = all_of(which_group), values_from = Counts, values_fill = 0) |>
       as.data.frame()
   
   # create non-environmental dataframe 
-  non_env_df = dplyr::select(df,all_of(all_names))
+  non_env_df <- dplyr::select(df,all_of(all_names))
   rownames(non_env_df) <- df$Location
   
   # create environmental dataframe
@@ -100,6 +100,7 @@ get_community_data <- function(df, which_group){
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
+  env_df$DO = NULL
   env_df$Altitude = NULL
   env_df$lat = NULL
   env_df$lon = NULL
@@ -108,10 +109,10 @@ get_community_data <- function(df, which_group){
 
 }
 
-diversity_table <- function(df){
+diversity_table <- function(df,vars){
   
   
-  data_conc = df[c("Rotifera","Macrothrix","Chydorus","Daphnia","Nauplius")]
+  data_conc = df[vars]
   N0 <- rowSums(data_conc>0)
   N1 <- exp( diversity(data_conc, index = "shannon") )
   N2 <- diversity(data_conc, index="invsimpson")
@@ -329,7 +330,6 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
   
   return( lambdas[which.max(variance_tradeoff)] )
 }
-
 
 
 sensitivity_analysis <- function(raw_matrix, expl_matrix, variables){
