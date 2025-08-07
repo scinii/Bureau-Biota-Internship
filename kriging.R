@@ -10,6 +10,7 @@ library(sf) # for converting coordinates
 library(sp)
 library(automap)
 set.seed(42) # for reproducibility 
+library(mice)
 
 lassoKrigingPrediction = function(train,test, what_to_predict){
 
@@ -96,11 +97,45 @@ validation = function(train,nfolds, what_to_predict){
   return(list(mean_rmse,mean_smape))
 }
 
-kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "Year 2023")
+
+
+###### 2024 ######
+
+kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "Year 2024")
 
 kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
 kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
 
-krig_abund = validation(kriging_data.sf, 13, "abundance")
-krig_even = validation(kriging_data.sf, 13, "eveness")
+kriging_data.sf$Conductivity = log(kriging_data.sf$Conductivity)
+kriging_data.sf$Temperature = log(kriging_data.sf$Temperature)
+kriging_data.sf$Depth = log(kriging_data.sf$Depth)
+kriging_data.sf$Altitude = scale(kriging_data.sf$Altitude)[1:nrow(kriging_data)]
+
+
+krig_abund = validation(kriging_data.sf, nrow(kriging_data), "abundance")
+krig_even = validation(kriging_data.sf, nrow(kriging_data), "eveness")
+
+
+###### All Years ######
+
+kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "All Years") #%>% na.omit()
+
+miced_data = mice(kriging_data)
+kriging_data = complete(miced_data)
+
+kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
+kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
+
+kriging_data.sf$Conductivity = log(kriging_data.sf$Conductivity)
+kriging_data.sf$Temperature = log(kriging_data.sf$Temperature)
+kriging_data.sf$Depth = log(kriging_data.sf$Depth)
+kriging_data.sf$Altitude = scale(kriging_data.sf$Altitude)[1:nrow(kriging_data)]
+
+
+krig_abund = validation(kriging_data.sf, nrow(kriging_data), "abundance")
+krig_even = validation(kriging_data.sf, nrow(kriging_data), "eveness")
+
+
+
+
 
