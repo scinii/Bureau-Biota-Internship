@@ -86,7 +86,7 @@ get_community_data <- function(df, which_group){
   df = ddply(df, var_to_summ, summarize, Counts = sum(Counts))
   
   all_names = unique(df[[which_group]])
-  
+
   df = pivot_wider(df, names_from = all_of(which_group), values_from = Counts, values_fill = 0) |>
       as.data.frame()
   

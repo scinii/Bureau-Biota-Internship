@@ -96,7 +96,7 @@ validation = function(train,nfolds, what_to_predict){
   return(list(mean_rmse,mean_smape))
 }
 
-kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "kriging_data_24")
+kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "Year 2023")
 
 kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
 kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
