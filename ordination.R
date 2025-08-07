@@ -1,7 +1,6 @@
 setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set working directory
 
 source('utils.R')
-source('https://raw.githubusercontent.com/zdealveindy/anadat-r/master/scripts/NumEcolR2/cleanplot.pca.R')
 
 ############ GET YEARLY DATA ############
 

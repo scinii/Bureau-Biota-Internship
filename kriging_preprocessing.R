@@ -2,12 +2,13 @@ setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set work
 
 source('utils.R')
 
-
 kriging_yearly_data <- function(){
 
   
   all_years <- c("Year 2018","Year 2019","Year 2020","Year 2021","Year 2022","Year 2023","Year 2024")
   wb <- createWorkbook()
+  
+  combined_list <- list()
   
   for(year in all_years){
     
@@ -25,14 +26,17 @@ kriging_yearly_data <- function(){
     data_kriging = zoo_community[,c(9,8,2,4:6,10)]
     data_kriging$abundance = dt$N2
     data_kriging$eveness = dt$E2
-    
+    data_kriging$Year <- gsub("Year ", "", year)
     
     addWorksheet(wb, year)
     writeData(wb, sheet = year, x = data_kriging)
     saveWorkbook(wb, file = 'kriging_data.xlsx', overwrite = TRUE)
-    
+    combined_list[[year]] <- data_kriging
   }
+  combined_all_years <- bind_rows(combined_list)
   
+  addWorksheet(wb, "All Years")
+  writeData(wb, sheet = "All Years", x = combined_all_years)
   saveWorkbook(wb, file = 'kriging_data.xlsx', overwrite = TRUE)
   
 }
