@@ -126,14 +126,33 @@ kriging_data = complete(miced_data)
 kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
 kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
 
-kriging_data.sf$Conductivity = log(kriging_data.sf$Conductivity)
-kriging_data.sf$Temperature = log(kriging_data.sf$Temperature)
-kriging_data.sf$Depth = log(kriging_data.sf$Depth)
-kriging_data.sf$Altitude = scale(kriging_data.sf$Altitude)[1:nrow(kriging_data)]
+
+temporal_distancing = function(sf){
+  
+  distancing = seq(6,1)*1e6
+  
+  years = seq(2018,2023)
+  
+  for(i in 1:6){
+    
+    year = years[i]
+    
+    print(sf[sf$Year == year,]$geometry)
+    
+    sf[sf$Year == year,]$geometry = sf[sf$Year == year,]$geometry + distancing[i]
+    
+    
+    print(sf[sf$Year == year,]$geometry)
+  }
+  
+  return(sf)
+}
+
+hello = temporal_distancing(kriging_data.sf)
 
 
-krig_abund = validation(kriging_data.sf, nrow(kriging_data), "abundance")
-krig_even = validation(kriging_data.sf, nrow(kriging_data), "eveness")
+krig_abund = validation(hello, nrow(hello), "abundance")
+krig_even = validation(hello, nrow(hello), "eveness")
 
 
 
