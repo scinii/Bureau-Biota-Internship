@@ -52,11 +52,16 @@ colnames(zoo_poly) <-  c("X", "X2", "Y", "XY", "Y2", "Z","ZX", "ZY","Z2")
 (zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly)))
 
 
-(zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.2, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
+(zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.1, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
 (mite.trend.rda2 <- rda(zoo_spe.trans ~ .,
                         as.data.frame(zoo_poly)[ ,zoo_rda.fwd[ ,2]] ))
+summary(mite.trend.rda2)
 anova(mite.trend.rda2)
 anova(mite.trend.rda2, by = "axis")
+
+
+spe_pca = rda(zoo_spe.trans)
+p_max_explainable_var = RsquareAdj(mite.trend.rda2)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
 
 
 mite.trend.fit <-
@@ -65,18 +70,22 @@ mite.trend.fit <-
          display = "lc",
          scaling = 1)
 s.value(zoo_xyz, mite.trend.fit, symbol = "circle")
+
 mite.rda2.axis1.env <- lm(mite.trend.fit[ ,1] ~ ., data = zoo_env.t)
 shapiro.test(resid(mite.rda2.axis1.env))
 summary(mite.rda2.axis1.env)
+
+mite.rda2.axis2.env <- lm(mite.trend.fit[ ,2] ~ ., data = zoo_env.t)
+shapiro.test(resid(mite.rda2.axis2.env))
+summary(mite.rda2.axis2.env)
 
 
 
 
 #### CORRELOGRAMS ####
 
-residualssss <- resid(lm(as.matrix(zoo_spe.trans) ~ ., data = zoo_xyz))
 
-(mantelloz = mantel.correlog(dist(residualssss), D.geo = dist(zoo_xy), nperm = 9999, r.type="spearman"))
+(mantelloz = mantel.correlog(vegdist(zoo_spe_corr, method = "bray"), D.geo = dist(zoo_xyz), nperm = 9999, r.type="spearman"))
 summary(mantelloz)
 plot(mantelloz)
 

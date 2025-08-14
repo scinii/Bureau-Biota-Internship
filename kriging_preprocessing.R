@@ -14,7 +14,7 @@ kriging_yearly_data <- function(){
     
     zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = year)
     
-    zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
+    zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
     
     zoo_community <- zoo_dataframes[[1]]
     
@@ -24,8 +24,8 @@ kriging_yearly_data <- function(){
     
     
     data_kriging = zoo_community[,c(9,8,2,4:6,10)]
-    data_kriging$abundance = dt$N2
-    data_kriging$eveness = dt$E2
+    data_kriging$N1 = dt$N1
+    data_kriging$N2 = dt$N2
     data_kriging$Year <- gsub("Year ", "", year)
     
     addWorksheet(wb, year)

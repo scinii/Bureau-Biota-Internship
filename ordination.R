@@ -55,17 +55,19 @@ anova.cca(full_rda, step=9999)
 anova.cca(full_rda, step=9999,by="term" )
 anova.cca(full_rda, step=9999,by="axis")
 
+
 # full_rda
 
 plot_ordination(full_rda, "rda", 1)
 plot_ordination(full_rda, "rda", 2)
 
 spe_pca = rda(zoo_spe.trans)
+
 plot_ordination(spe_pca, "pca", 1)
 plot_ordination(spe_pca, "pca", 2)
 
 
-p_max_explainable_var = RsquareAdj(full_rda)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
+p_max_explainable_var = RsquareAdj(full_rda)$r.squared / ( sum(spe_pca$CA$eig[1:4]) / sum(spe_pca$CA$eig[1:5]) )
 
 
 ##################### VARIATION PARTITIONING ##############################

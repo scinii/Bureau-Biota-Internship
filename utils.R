@@ -13,6 +13,7 @@ library(memisc) # missing data
 library(ggplot2)
 library(corrplot)
 library(naniar)
+source('http://www.davidzeleny.net/anadat-r/doku.php/en:numecolr:pcacircle?do=export_code&codeblock=1')
 
 # spatial packages
 
@@ -202,6 +203,22 @@ plot_bubble_map <- function(df, column_name){
 }
 
 
+pcacircle <- function (pca, mult.spe, fact.spe, silent=silent){
+
+  # Draws a circle of equilibrium contribution on a PCA plot
+  # generated from a vegan analysis.
+  
+  # Author: Francois Gillet, 25 August 2012
+  
+  eigenv <- pca$CA$eig
+  p <- length(eigenv)
+  n <- nrow(pca$CA$u)
+  tot <- sum(eigenv)
+  radius <- (2/p)^0.5 * mult.spe * fact.spe
+  symbols(0, 0, circles=radius, inches=FALSE, add=TRUE, fg="red")
+}
+
+
 plot_ordination <- function(model, which_ordination, scaling){
   
   "
@@ -310,7 +327,7 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
     
     variances[i] = RsquareAdj(rda_model)$r.squared
     
-    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:3]) / sum(pca_model$CA$eig[1:length(pca_model$CA$eig)]) )
+    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:length(variables)]) / sum(pca_model$CA$eig[1:length(pca_model$CA$eig)]) )
     
   }
   
