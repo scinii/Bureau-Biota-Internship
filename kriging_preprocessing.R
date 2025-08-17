@@ -26,6 +26,7 @@ kriging_yearly_data <- function(){
     data_kriging = zoo_community[,c(9,8,2,4:6,10)]
     data_kriging$N1 = dt$N1
     data_kriging$N2 = dt$N2
+    data_kriging$Abundance = rowSums(zoo_spe)
     data_kriging$Year <- gsub("Year ", "", year)
     
     addWorksheet(wb, year)

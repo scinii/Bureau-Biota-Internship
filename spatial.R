@@ -5,6 +5,9 @@ library(spdep)
 library(adegraphics)
 library(adespatial)
 
+source('https://raw.githubusercontent.com/zdealveindy/anadat-r/master/scripts/NumEcolR2/plot.links.R')
+
+
 ############ GET YEARLY DATA ############
 
 which_year = "Year 2024"
@@ -51,7 +54,6 @@ zoo_poly = poly(as.matrix(zoo_xyz), degree = 2, raw = FALSE)
 colnames(zoo_poly) <-  c("X", "X2", "Y", "XY", "Y2", "Z","ZX", "ZY","Z2")
 (zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly)))
 
-
 (zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.1, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
 (mite.trend.rda2 <- rda(zoo_spe.trans ~ .,
                         as.data.frame(zoo_poly)[ ,zoo_rda.fwd[ ,2]] ))
@@ -79,13 +81,12 @@ mite.rda2.axis2.env <- lm(mite.trend.fit[ ,2] ~ ., data = zoo_env.t)
 shapiro.test(resid(mite.rda2.axis2.env))
 summary(mite.rda2.axis2.env)
 
-
+plot.links(zoo_xy, dist(zoo_xyz), thresh =1233)
 
 
 #### CORRELOGRAMS ####
-
-
-(mantelloz = mantel.correlog(vegdist(zoo_spe_corr, method = "bray"), D.geo = dist(zoo_xyz), nperm = 9999, r.type="spearman"))
+residuals = resid(lm(as.matrix(zoo_spe.trans) ~ XY + ZX + Y2, data = zoo_poly))
+(mantelloz = mantel.correlog(dist(residuals), D.geo = dist(zoo_xyz), nperm = 9999, r.type="spearman"))
 summary(mantelloz)
 plot(mantelloz)
 

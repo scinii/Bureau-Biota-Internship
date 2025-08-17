@@ -13,15 +13,38 @@ library(tidyverse) # for manipulating the data frame
 library(sf) # for converting coordinates
 library(sp)
 library(automap)
-set.seed(42) # for reproducibility 
 library(mice)
 library(tidysdm)
 library("car")
 
-lassoKrigingPrediction = function(train, test, what_to_predict){
+set.seed(0) # for reproducibility 
+
+temporal_distancing = function(sf){
+  
+  distancing = seq(6,1)*1e5
+  
+  years = seq(2018,2023)
+  
+  for(i in 1:6){
+    
+    year = years[i]
+    
+    print(sf[sf$Year == year,]$geometry)
+    
+    sf[sf$Year == year,]$geometry = sf[sf$Year == year,]$geometry + distancing[i]
+    
+    
+    print(sf[sf$Year == year,]$geometry)
+  }
+  
+  return(sf)
+}
+
+lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
 
   
-  results = array(1:2)
+  results_lasso = array(1:2)
+  results_kriging = array(1:2)
   
   matrixCovariates = as.matrix(as.data.frame(train)[,1:5])
   
@@ -41,10 +64,14 @@ lassoKrigingPrediction = function(train, test, what_to_predict){
   
   residuals = matrixTarget - predict(bestModel, s=bestLambda, newx =matrixCovariates ) # calculate the residuals from lasso 
   
-  print(mean(residuals))
-  hist(residuals)
-  print(shapiro.test(residuals))
-  qqPlot(residuals)
+  if(plot_bool == TRUE){
+    
+    print(mean(residuals))
+    hist(residuals)
+    print(shapiro.test(residuals))
+    qqPlot(residuals)
+    
+  }
   
   train$resid = residuals
   
@@ -52,37 +79,70 @@ lassoKrigingPrediction = function(train, test, what_to_predict){
   
   residKriged = krige(resid ~ 1,locations = train,newdata = test,model = migliore$var_model,beta = 0)
   
-  test$predi = (predict(bestModel,s=bestLambda, newx = testCovariates) + residKriged$var1.pred) 
+  lasso_prediciton = predict(bestModel,s=bestLambda, newx = testCovariates)
+  
+  test$predi = lasso_prediciton + residKriged$var1.pred
   
   test_true = test[[what_to_predict]] 
   
-  results[1] = Metrics::rmse( test$predi,test_true)
-  results[2] = Metrics::smape( test$predi,test_true)  
+  results_lasso[1] = Metrics::rmse( lasso_prediciton,test_true)
+  results_lasso[2] = Metrics::smape( lasso_prediciton,test_true)  
+  
+  results_kriging[1] = Metrics::rmse( test$predi,test_true)
+  results_kriging[2] = Metrics::smape( test$predi,test_true)  
   
   
-  return(list(results,bestModel))
+  return(list(results_kriging, results_lasso,bestModel))
 }
 
-temporal_distancing = function(sf){
+
+validation = function(train,nfolds, what_to_predict){
   
-  distancing = seq(6,1)*1e6
   
-  years = seq(2018,2023)
+  rmse_kriging = c(1:nfolds)
+  smape_kriging = c(1:nfolds)
+  rmse_lasso = c(1:nfolds)
+  smape_lasso = c(1:nfolds)
   
-  for(i in 1:6){
+  foldIndex = 1:nrow(train)
+  
+  for(j in 1:nfolds){
     
-    year = years[i]
+    trainFolds = train[foldIndex != j,]
+    valFold = train[foldIndex == j,]
     
-    print(sf[sf$Year == year,]$geometry)
-    
-    sf[sf$Year == year,]$geometry = sf[sf$Year == year,]$geometry + distancing[i]
+    scores = lassoKrigingPrediction(trainFolds,valFold, what_to_predict, FALSE)
     
     
-    print(sf[sf$Year == year,]$geometry)
+    scores_kriging = scores[[1]]
+    scores_lasso = scores[[2]]
+    
+    rmse_kriging[j] = scores_kriging[1]
+    smape_kriging[j] = scores_kriging[2]
+    
+    rmse_lasso[j] = scores_lasso[1]
+    smape_lasso[j] = scores_lasso[2]
+    
+    
   }
   
-  return(sf)
+  kriging_scores = c(mean(rmse_kriging), mean(smape_kriging))
+  lasso_scores = c(mean(rmse_lasso), mean(smape_lasso))
+  
+  return(list(kriging_scores, lasso_scores))
+  
 }
+
+
+###### Year 2024 ######
+
+#kriging_data_24 = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "Year 2024") 
+
+#kriging_data_24.sf = st_as_sf(kriging_data_24,coords = c('lon','lat'), crs=4326)
+#kriging_data_24.sf = st_transform(kriging_data_24.sf , crs = 3995)
+
+#krig_24_N1 = validation(kriging_data_24.sf, nrow(kriging_data_24.sf), "N1")
+#krig_24_N2 = validation(kriging_data_24.sf, nrow(kriging_data_24.sf), "N2")
 
 ###### All Years ######
 
@@ -103,13 +163,14 @@ train_sf = training(block_initial)
 
 test_sf = testing(block_initial)
 
-krig_N1 = lassoKrigingPrediction(train_sf, test_sf, "N1")
+krig_N1 = lassoKrigingPrediction(train_sf, test_sf, "N1", TRUE)
 
-coef(krig_N1[[2]])
+coef(krig_N1[[3]])
 
-krig_N2 = lassoKrigingPrediction(train_sf, test_sf, "N2")
+krig_N2 = lassoKrigingPrediction(train_sf, test_sf, "N2", TRUE)
 
-coef(krig_N2[[2]])
+coef(krig_N2[[3]])
+
 
 
 
