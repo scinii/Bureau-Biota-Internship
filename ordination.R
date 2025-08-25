@@ -19,26 +19,21 @@ zoo_env <- zoo_dataframes[[3]]
 zoo_alt = zoo_community$Altitude
 
 
-###### DCA ######
-
 # perform DCA to determine which method to use
 
 dca = decorana(zoo_spe, ira = 0) 
 dca
 
-zoo_env.f = zoo_env
-zoo_env.f$DO = NULL
-zoo_env.f$Conductivity = log(zoo_env$Conductivity)
-zoo_env.f$Temperature = log(zoo_env$Temperature)
-zoo_env.f$Depth = log(zoo_community$Depth)
 
-zoo_env.f %>% gather(key="EnvVar", value = "Val") %>%
-  ggplot( aes(x=EnvVar, y=Val, fill=EnvVar)) + 
-  geom_boxplot(alpha=0.6) + theme(legend.position="none") + 
-  labs(x = "Environmental Variables", y="Standardized Value")
+###### TRANSFORMATIONS ######
 
 
-###### RDA ######
+zoo_env.t = zoo_env
+zoo_env.t$DO = NULL
+zoo_env.t$Conductivity = log(zoo_env$Conductivity)
+zoo_env.t$Temperature = log(zoo_env$Temperature)
+zoo_env.t$Depth = log(zoo_community$Depth)
+
 
 max_var_box_cox(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature", 'Depth'), NA, TRUE)
 
@@ -69,24 +64,6 @@ plot_ordination(spe_pca, "pca", 2)
 
 p_max_explainable_var = RsquareAdj(full_rda)$r.squared / ( sum(spe_pca$CA$eig[1:4]) / sum(spe_pca$CA$eig[1:5]) )
 
-
-##################### VARIATION PARTITIONING ##############################
-
-partitioned = varpart(zoo_spe.trans, zoo_env.f, zoo_alt)
-
-plot(partitioned,
-     Xnames = c("Env", "3d"), # name the partitions
-     bg = c("seagreen3", "mediumpurple"), alpha = 80, # colour the circles
-     digits = 2, # only show 2 digits
-     cex = 1.5)
-
-
-#### TESTING SIGNIFICANCE OF PARTITIONING ####
-
-anova.cca(rda(zoo_spe.trans, zoo_env.f), step = 9999)
-anova.cca(rda(zoo_spe.trans, zoo_extra), step = 9999)
-anova.cca(rda(zoo_spe.trans, zoo_env.f,zoo_extra), step = 9999)
-anova.cca(rda(zoo_spe.trans,zoo_extra, zoo_env.f), step = 9999)
 
 
 
