@@ -193,6 +193,30 @@ missing_data <- function(df, which_vars){
   }
 }
 
+plot_histogram <- function(df){
+  
+  " This function generates a histogram and a box-plot in the same figure"
+  
+  col_name = colnames(df)
+  
+  plt1 <- ggplot(df,aes(x="", y = .data[[col_name]]  )) +
+    geom_boxplot(fill = "lightblue", color = "black") + 
+    coord_flip() +
+    theme_classic() +
+    xlab("") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+  
+  plt2 <- ggplot(df) +
+    geom_histogram(aes(x = .data[[col_name]]),
+                   position = "identity", 
+                   fill = "lightblue", color = "black") +
+    ylab("Frequency") +
+    theme_classic()
+  
+  egg::ggarrange(plt2, plt1, heights = 2:1)
+}
+
 plot_bubble_map <- function(df, column_name){
   
   "
@@ -221,7 +245,6 @@ plot_bubble_map <- function(df, column_name){
     ) 
 }
 
-
 pcacircle <- function (pca, mult.spe, fact.spe, silent=silent){
 
   # Draws a circle of equilibrium contribution on a PCA plot
@@ -236,7 +259,6 @@ pcacircle <- function (pca, mult.spe, fact.spe, silent=silent){
   radius <- (2/p)^0.5 * mult.spe * fact.spe
   symbols(0, 0, circles=radius, inches=FALSE, add=TRUE, fg="red")
 }
-
 
 plot_ordination <- function(model, which_ordination, scaling){
   
@@ -277,9 +299,8 @@ plot_ordination <- function(model, which_ordination, scaling){
   }
 }
 
-  
-##### TRANSFORMATIONS ######
 
+##### TRANSFORMATIONS ######
 
 box_cox_trans <- function(raw_matrix, lambda){
   
@@ -301,7 +322,6 @@ box_cox_trans <- function(raw_matrix, lambda){
   return (transformed_data)
   
 }
-
 
 max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool){
   
@@ -353,7 +373,6 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
   
   return( lambdas[which.max(variance_tradeoff)] )
 }
-
 
 sensitivity_analysis <- function(raw_matrix, expl_matrix, variables){
   
