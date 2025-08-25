@@ -4,12 +4,11 @@ source('utils.R')
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2019"
+which_year = "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
 zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
-zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
 
 zoo_community <- zoo_dataframes[[1]]
 

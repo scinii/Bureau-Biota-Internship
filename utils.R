@@ -7,13 +7,13 @@ library(plyr)
 library(DescTools) # statistical package
 library(vegan) # ordination functions
 library(memisc) # missing data
-# source("cleanplot.pca.R") # plots PCA
 
 # plots
 library(ggplot2)
 library(corrplot)
 library(naniar)
 source('http://www.davidzeleny.net/anadat-r/doku.php/en:numecolr:pcacircle?do=export_code&codeblock=1')
+library(latex2exp) # latex
 
 # spatial packages
 
@@ -29,8 +29,8 @@ split_rotifers_arthropodas <- function(df, which_group){
   :return: Three dataframes where each row corresponds to a lake. 
            - non_env_dataframe has as columns the different groups of arthropodas
                                and one for rotifers (the counts have been aggregated)
-           - env_dataframe has as columns the environmental variables pH, DO, Conductivity and Temperature
-           - df's columns are the ones of the two dataframes just mentioned plus Depth, Drought, lat, lon and Altitude
+           - env_dataframe has as columns the environmental variables pH, Conductivity and Temperature
+           - full_df's columns are the ones of the two dataframes just mentioned plus Depth, Drought, lat, lon and Altitude
   "
   
   vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature','Depth', 'Drought', 'Counts', 'lat','lon','Altitude')
@@ -56,6 +56,7 @@ split_rotifers_arthropodas <- function(df, which_group){
   df = pivot_wider(df, names_from = Taxa, values_from = Counts, values_fill = 0) |>
     as.data.frame()
   
+  full_df = df
   
   # create non environmental dataframe
   non_env_df = dplyr::select(df,all_of(all_names))
@@ -71,19 +72,29 @@ split_rotifers_arthropodas <- function(df, which_group){
   env_df$lat = NULL
   env_df$lon = NULL
   
-  return(list(df,non_env_df,env_df))
+  
+  return(list(full_df,non_env_df,env_df))
   
 }
 
 get_community_data <- function(df, which_group){
   
+  "
+  :param df: dataframe that contains the vars (see below) columns. 
+  :param which_group: which group to keep.
+  :return: Three dataframes where each row corresponds to a lake. 
+           - non_env_dataframe has as columns the different groups
+           - env_dataframe has as columns the environmental variables pH, Conductivity and Temperature
+           - full_df's columns are the ones of the two dataframes just mentioned plus Depth, Drought, lat, lon and Altitude
+  "
   
-  var_to_keep = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
+  
+  vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
                   'Depth', 'Drought', 'Counts', 'lat','lon','Altitude',which_group)
   
-  df = df[ var_to_keep ] %>% drop_na(all_of(which_group))
+  df = df[ vars ] %>% drop_na(all_of(which_group))
   
-  var_to_summ = var_to_keep[var_to_keep != 'Counts'] 
+  var_to_summ = vars[vars != 'Counts'] 
   df = ddply(df, var_to_summ, summarize, Counts = sum(Counts))
   
   all_names = unique(df[[which_group]])
@@ -91,13 +102,14 @@ get_community_data <- function(df, which_group){
   df = pivot_wider(df, names_from = all_of(which_group), values_from = Counts, values_fill = 0) |>
       as.data.frame()
   
+  full_df = df
+  
   # create non-environmental dataframe 
   non_env_df <- dplyr::select(df,all_of(all_names))
   rownames(non_env_df) <- df$Location
   
   # create environmental dataframe
   env_df <- dplyr::select(df, -all_of(all_names))
-  #env_df <- env_df[!duplicated(env_df),]
   rownames(env_df) <- df$Location
   env_df$Location = NULL
   env_df$Drought = NULL
@@ -106,17 +118,24 @@ get_community_data <- function(df, which_group){
   env_df$lat = NULL
   env_df$lon = NULL
     
-  return(list(df,non_env_df,env_df))
+  return(list(full_df,non_env_df,env_df))
 
 }
 
 diversity_table <- function(df,vars){
   
+  "
+  :param df: dataframe that contains the vars (see below) columns 
+  :param vars: indices of the species counts
+  :return: dataframe that contains location and names of the lakes plus the diversity
+           and eveness indices
+  "
   
-  data_conc = df[vars]
-  N0 <- rowSums(data_conc>0)
-  N1 <- exp( diversity(data_conc, index = "shannon") )
-  N2 <- diversity(data_conc, index="invsimpson")
+  
+  data_counts = df[vars]
+  N0 <- rowSums(data_counts>0)
+  N1 <- exp( diversity(data_counts, index = "shannon") )
+  N2 <- diversity(data_counts, index="invsimpson")
   E1 <- N1 / N0
   E2 <- N2 / N0
   diversity <- data.frame(N0,N1,N2,E1,E2)
@@ -178,7 +197,7 @@ plot_bubble_map <- function(df, column_name){
   
   "
   :param df: dataframe that contains longitude, latitude and the column_name
-  :param column_name: oclumn whose values we want to plot
+  :param column_name: column whose values we want to plot
   :return: a plot of the Kongsfjorden area and each lake is represented by a triangle
            (to indentify its location) and a colour associated with the values in the column
   "
@@ -258,19 +277,6 @@ plot_ordination <- function(model, which_ordination, scaling){
   }
 }
 
-plot_frequency <- function(df){
-  
-  hist(apply(df > 0, 2, sum),
-       main = "Species Occurrences",
-       right = FALSE,
-       las = 1,
-       xlab = "Number of occurrences",
-       ylab = "Number of species",
-       # length(unique(df$Location)
-       breaks = seq(0, nrow(df), by = 1),
-       col = "bisque"
-  )
-}
   
 ##### TRANSFORMATIONS ######
 
@@ -336,7 +342,7 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
     
     plot(lambdas,variances, ylab = "Explained Variance", xlab = "Lambda", type = "p", bg="red", pch = 21, col = "red", ylim = c(min(variances), max(max_variances)) )
     points(lambdas, max_variances, type = "p", bg="blue", pch = 21, col = "blue")
-    legend(x="bottomright", legend = c("Variance explained by RDA","Maximum Variance RDA could explain"), fill= c("red","blue"), bg="transparent")
+    legend(x="bottomright", legend = c(TeX('$v_{RDA}$'),TeX('$v_{RDA}/v_{PCA}$')), fill= c("red","blue"), bg="transparent")
     
   }
   
