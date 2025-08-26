@@ -3,7 +3,10 @@ setwd('C:\\Users\\rober\\Documents\\GitHub\\Bureau-Biota-Internship') # set work
 source('utils.R')
 
 kriging_yearly_data <- function(){
-
+  
+  "This function takes the first two dataframes obtained from split_rotifers_arthropodas
+   computes the N1 and N2 Hill's numbers and returns a dataframe with the following columns  
+    lon, lat, pH, Conductivity, Temperature, Depth, Altitude, N1, N2, Altitude and year "
   
   all_years <- c("Year 2018","Year 2019","Year 2020","Year 2021","Year 2022","Year 2023","Year 2024")
   wb <- createWorkbook()

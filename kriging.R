@@ -16,10 +16,24 @@ library(automap)
 library(mice)
 library(tidysdm)
 library("car")
+library(rstanarm)
+library(bayestestR)
+library(bayesplot)
+library(insight)
+library(broom)
 
 set.seed(0) # for reproducibility 
 
+
+# FUNCTIONS FOR KRIGING #
+
 temporal_distancing = function(sf){
+  
+  " 
+  This function separates applies the separation method of the lakes form different
+  years described in the report.
+    
+  "
   
   distancing = seq(6,1)*1e5
   
@@ -41,6 +55,14 @@ temporal_distancing = function(sf){
 }
 
 lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
+  
+  # performs Kriging with external drift provided by lasso regression
+  # Args:
+  #       train: training sf dataframe
+  #       test: testing sf dataframe
+  #       what_to_predict: name of the column with the values we want to predict 
+  #       plot_bool: if TRUE we plot the histogram and qqPlot of the residuals from Lasso  
+  # Return: a list with rmse,smape scores and the fitted lasso model
 
   
   results_lasso = array(1:2)
@@ -56,6 +78,8 @@ lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
   
   matrixCovariates = scale(matrixCovariates)
   
+  print(matrixCovariates)
+  
   cv = cv.glmnet(matrixCovariates, matrixTarget, alpha = 1, grouped = FALSE) 
   
   bestLambda = cv$lambda.min
@@ -65,19 +89,15 @@ lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
   residuals = matrixTarget - predict(bestModel, s=bestLambda, newx =matrixCovariates ) # calculate the residuals from lasso 
   
   if(plot_bool == TRUE){
-    
-    print(mean(residuals))
     hist(residuals)
-    print(shapiro.test(residuals))
     qqPlot(residuals)
-    
   }
   
   train$resid = residuals
   
-  migliore <- autofitVariogram(resid ~ 1, train)
+  best_variogram <- autofitVariogram(resid ~ 1, train)
   
-  residKriged = krige(resid ~ 1,locations = train,newdata = test,model = migliore$var_model,beta = 0)
+  residKriged = krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
   
   lasso_prediciton = predict(bestModel,s=bestLambda, newx = testCovariates)
   
@@ -95,80 +115,93 @@ lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
   return(list(results_kriging, results_lasso,bestModel))
 }
 
-
-validation = function(train,nfolds, what_to_predict){
+bayesianlinearKrigingPrediction = function(train, test, what_to_predict, plot_bool){
+  
+  # performs Kriging with external drift provided by a linear bayesian model
+  # Args:
+  #       train: training sf dataframe
+  #       test: testing sf dataframe
+  #       what_to_predict: name of the column with the values we want to predict 
+  #       plot_bool: if TRUE we plot the histogram and qqPlot of the residuals from the linear model
+  # Return: a list with rmse,smape scores and the fitted linear model
   
   
-  rmse_kriging = c(1:nfolds)
-  smape_kriging = c(1:nfolds)
-  rmse_lasso = c(1:nfolds)
-  smape_lasso = c(1:nfolds)
+  results_lasso = array(1:2)
+  results_kriging = array(1:2)
   
-  foldIndex = 1:nrow(train)
+  matrixCovariates = as.matrix(as.data.frame(train)[,1:5])
   
-  for(j in 1:nfolds){
+  matrixTarget = train[[what_to_predict]]
+  
+  testCovariates = as.matrix(as.data.frame(test)[,1:5])
+  
+  testCovariates = scale(testCovariates, center = apply(matrixCovariates,2,mean), scale = apply(matrixCovariates,2,sd))
+  
+  matrixCovariates = scale(matrixCovariates) %>% as.data.frame()
+  
+  linear_model <- stan_glm(matrixTarget ~., data = matrixCovariates, seed=42)
+  
+  residuals = matrixTarget - predict(linear_model, newx = matrixCovariates ) #
+  
+  print(plot(linear_model, plotfun = "trace"))
+  print(summary(linear_model))
+  
+  if(plot_bool == TRUE){
     
-    trainFolds = train[foldIndex != j,]
-    valFold = train[foldIndex == j,]
-    
-    scores = lassoKrigingPrediction(trainFolds,valFold, what_to_predict, FALSE)
-    
-    
-    scores_kriging = scores[[1]]
-    scores_lasso = scores[[2]]
-    
-    rmse_kriging[j] = scores_kriging[1]
-    smape_kriging[j] = scores_kriging[2]
-    
-    rmse_lasso[j] = scores_lasso[1]
-    smape_lasso[j] = scores_lasso[2]
-    
+    hist(residuals)
+    qqPlot(residuals)
     
   }
   
-  kriging_scores = c(mean(rmse_kriging), mean(smape_kriging))
-  lasso_scores = c(mean(rmse_lasso), mean(smape_lasso))
+  train$resid = residuals
   
-  return(list(kriging_scores, lasso_scores))
+  best_variogram <- autofitVariogram(resid ~ 1, train)
+  
+  residKriged = krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
+  
+  bayesian_prediciton = predict(linear_model, newdata = as.data.frame(testCovariates))
+  
+  test$predi = bayesian_prediciton + residKriged$var1.pred
+  
+  test_true = test[[what_to_predict]] 
+  
+  results_bayesian[1] = Metrics::rmse( bayesian_prediciton,test_true)
+  results_bayesian[2] = Metrics::smape( bayesian_prediciton,test_true)  
+  
+  results_kriging[1] = Metrics::rmse( test$predi,test_true)
+  results_kriging[2] = Metrics::smape( test$predi,test_true)  
+  
+  
+  return(list(results_kriging, results_lasso,linear_model))
   
 }
 
 
-###### Year 2024 ######
 
-#kriging_data_24 = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "Year 2024") 
-
-#kriging_data_24.sf = st_as_sf(kriging_data_24,coords = c('lon','lat'), crs=4326)
-#kriging_data_24.sf = st_transform(kriging_data_24.sf , crs = 3995)
-
-#krig_24_N1 = validation(kriging_data_24.sf, nrow(kriging_data_24.sf), "N1")
-#krig_24_N2 = validation(kriging_data_24.sf, nrow(kriging_data_24.sf), "N2")
-
-###### All Years ######
+# KRIGING #
 
 kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "All Years") 
 
 miced_data = mice(kriging_data)
-kriging_data = complete(miced_data)
+kriging_data = complete(miced_data) # impute missing data
 
 kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
 kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
 
 
-hello = temporal_distancing(kriging_data.sf)
+kriging_data.sf = temporal_distancing(kriging_data.sf)
 
-block_initial <- spatial_initial_split(hello,prop = 0.2, spatial_block_cv)
+block_initial <- spatial_initial_split(kriging_data.sf,prop = 0.2, spatial_block_cv)
 
 train_sf = training(block_initial)
 
 test_sf = testing(block_initial)
 
-krig_N1 = lassoKrigingPrediction(train_sf, test_sf, "N1", TRUE)
 
+krig_N1 = lassoKrigingPrediction(train_sf, test_sf, "N1", TRUE)
 coef(krig_N1[[3]])
 
 krig_N2 = lassoKrigingPrediction(train_sf, test_sf, "N2", TRUE)
-
 coef(krig_N2[[3]])
 
 
