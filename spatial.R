@@ -46,9 +46,7 @@ zoo_env.t$Conductivity = log(zoo_env$Conductivity)
 zoo_env.t$Temperature = log(zoo_env$Temperature)
 zoo_env.t$Depth = log(zoo_community$Depth)
 
-most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.t, c("Conductivity", "pH", "Temperature", "Depth"))
-
-zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda[1])
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.8)
 
 
 #### TREND SURFACE ANALYSIS ####
@@ -70,7 +68,7 @@ spe_pca = rda(zoo_spe.trans)
 p_max_explainable_var = RsquareAdj(zoo_trend)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
 
 
-trend_scores <-  scores(mite.trend.rda2, choices = 1:2, display = "lc", scaling = 1)
+trend_scores <-  scores(zoo_trend , choices = 1:2, display = "lc", scaling = 1)
 
 s.value(zoo_xyz, trend_scores, symbol = "circle")
 

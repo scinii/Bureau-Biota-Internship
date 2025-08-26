@@ -34,16 +34,11 @@ zoo_env.t$Conductivity = log(zoo_env$Conductivity)
 zoo_env.t$Temperature = log(zoo_env$Temperature)
 zoo_env.t$Depth = log(zoo_community$Depth)
 
-
-max_var_box_cox(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature", 'Depth'), NA, TRUE)
-
-most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.f, c("Conductivity", "pH", "Temperature", 'Depth'))
-
-zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda[1])
+zoo_spe.trans = box_cox_trans(zoo_spe, 0.8)
 
 
 # FULL MODEL
-full_rda = rda(zoo_spe.trans ~ Conductivity + pH  + Temperature + Depth, data=zoo_env.f)
+full_rda = rda(zoo_spe.trans ~ Conductivity + pH  + Temperature + Depth, data=zoo_env.t)
 
 summary(full_rda)
 anova.cca(full_rda, step=9999)
