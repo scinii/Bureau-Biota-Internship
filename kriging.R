@@ -43,12 +43,8 @@ temporal_distancing = function(sf){
     
     year = years[i]
     
-    print(sf[sf$Year == year,]$geometry)
-    
     sf[sf$Year == year,]$geometry = sf[sf$Year == year,]$geometry + distancing[i]
     
-    
-    print(sf[sf$Year == year,]$geometry)
   }
   
   return(sf)
@@ -78,7 +74,6 @@ lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
   
   matrixCovariates = scale(matrixCovariates)
   
-  print(matrixCovariates)
   
   cv = cv.glmnet(matrixCovariates, matrixTarget, alpha = 1, grouped = FALSE) 
   

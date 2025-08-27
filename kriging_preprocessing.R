@@ -17,11 +17,13 @@ kriging_yearly_data <- function(){
     
     zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = year)
     
-    zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
+    zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
     
     zoo_community <- zoo_dataframes[[1]]
     
     zoo_spe <- zoo_dataframes[[2]]
+    
+    print(length(colnames(zoo_spe)))
     
     dt = diversity_table(zoo_spe, colnames(zoo_spe))
     
@@ -44,8 +46,6 @@ kriging_yearly_data <- function(){
   saveWorkbook(wb, file = 'kriging_data.xlsx', overwrite = TRUE)
   
 }
-
-
 
 
 
