@@ -6,7 +6,7 @@ source('utils.R')
 
 which_year <-  "Year 2024"
 
-zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
+zoo_yearly <- read.xlsx(xlsxFile = "data\\yearly_data.xlsx", sheet = which_year)
 
 zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
 

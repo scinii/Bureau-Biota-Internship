@@ -14,8 +14,8 @@ split_yearly_data <- function(df){
   numeric_variables <- c("Year","pH",	"DO",	"Conductivity",	"Temperature", "Depth",
                          "Drought", "Counts")
   
-  location_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
-  lakes_data <- read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "counts") %>%
+  location_data <- read.xlsx(xlsxFile = "data\\data_lakes.xlsx", sheet = "locations")
+  lakes_data <- read.xlsx(xlsxFile = "data\\data_lakes.xlsx", sheet = "counts") %>%
     select(-'Name',-'Taxa') %>%
     merge(location_data,by="Location")
   lakes_data[numeric_variables] <- sapply(lakes_data[numeric_variables], as.numeric)
@@ -38,7 +38,7 @@ split_yearly_data <- function(df){
       
   }
   
-  saveWorkbook(wb, file = 'yearly_data.xlsx', overwrite = TRUE)
+  saveWorkbook(wb, file = 'data\\yearly_data.xlsx', overwrite = TRUE)
   
 }
 
@@ -56,7 +56,7 @@ kriging_yearly_data <- function(){
   
   for(year in all_years){
     
-    zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = year)
+    zoo_yearly <- read.xlsx(xlsxFile = "data\\yearly_data.xlsx", sheet = year)
     
     zoo_dataframes <- get_community_data(zoo_yearly, 'Genus')
     
@@ -75,14 +75,14 @@ kriging_yearly_data <- function(){
     
     addWorksheet(wb, year)
     writeData(wb, sheet <-  year, x = data_kriging)
-    saveWorkbook(wb, file <-  'kriging_data.xlsx', overwrite = TRUE)
+    saveWorkbook(wb, file <-  'data\\kriging_data.xlsx', overwrite = TRUE)
     combined_list[[year]] <- data_kriging
   }
   combined_all_years <- bind_rows(combined_list)
   
   addWorksheet(wb, "All Years")
   writeData(wb, sheet <-  "All Years", x =  combined_all_years)
-  saveWorkbook(wb, file <-  'kriging_data.xlsx', overwrite =  TRUE)
+  saveWorkbook(wb, file <-  'data\\kriging_data.xlsx', overwrite =  TRUE)
   
 }
 

@@ -175,7 +175,7 @@ bayesianlinearKrigingPrediction = function(train, test, what_to_predict, plot_bo
 
 # KRIGING #
 
-kriging_data <-  read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "All Years") 
+kriging_data <-  read.xlsx(xlsxFile = "data\\kriging_data.xlsx", sheet = "All Years") 
 
 miced_data <-  mice(kriging_data)
 kriging_data <-  complete(miced_data) # impute missing data
