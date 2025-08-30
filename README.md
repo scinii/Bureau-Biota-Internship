@@ -1,5 +1,5 @@
 This code accompanies my Internship report where we studied zooplankton in the Svalbard island.
-Below we may find a list of the different R files and what they do
+Below you may find a list of the different R files and what they do
 
 - preprocessing.R: functions to create the excel files.
 - utils.R: all the main functions we reuse in the other files.
