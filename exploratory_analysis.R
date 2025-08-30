@@ -6,7 +6,7 @@ source('utils.R')
 
 which_year <-  "Year 2024"
 
-zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
+zoo_yearly <- read.xlsx(xlsxFile = "data\\yearly_data.xlsx", sheet = which_year)
 
 zoo_dataframes <- split_rotifers_arthropodas(zoo_yearly, 'Genus')
 
@@ -34,6 +34,8 @@ zoo_spe.trans <-  box_cox_trans(zoo_spe, most_common_lambda[1])
 
 ###### PLOTS ######
 
+lakes_map()
+
 missing_data(zoo_yearly,'env')
 missing_data(zoo_yearly, 'groups')
 
@@ -52,7 +54,7 @@ plot_bubble_map(zoo_community, "Depth")
 plot_bubble_map(zoo_community, "Altitude")
 
 
-corrplot(cor(zoo_env.t), is.corr = FALSE, method = 'color',
+corrplot(cor(zoo_env), is.corr = FALSE, method = 'color',
          col = COL1('Oranges'), cl.pos = 'r', addgrid.col = 'white', addCoef.col = 'black', type= "lower", diag = FALSE)
 
 

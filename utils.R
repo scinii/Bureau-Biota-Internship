@@ -152,7 +152,7 @@ lakes_map <- function(){
   
   " Returns a map of the Kongsfjorden area and the location of the lakes "
   
-  lakes_location <-  read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
+  lakes_location <-  read.xlsx(xlsxFile = "data\\data_lakes.xlsx", sheet = "locations")
   basemap(limits = c(11.5, 12.8, 78.8, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
     geom_spatial_point(data = lakes_location, aes(x = lon, y = lat), color='red') + 
