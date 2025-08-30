@@ -23,27 +23,25 @@ kriging_yearly_data <- function(){
     
     zoo_spe <- zoo_dataframes[[2]]
     
-    print(length(colnames(zoo_spe)))
-    
-    dt = diversity_table(zoo_spe, colnames(zoo_spe))
+    dt <-  diversity_table(zoo_spe, colnames(zoo_spe))
     
     
-    data_kriging = zoo_community[,c(9,8,2,4:6,10)]
-    data_kriging$N1 = dt$N1
-    data_kriging$N2 = dt$N2
-    data_kriging$Abundance = rowSums(zoo_spe)
+    data_kriging <-  zoo_community[,c(9,8,2,4:6,10)]
+    data_kriging$N1 <-  dt$N1
+    data_kriging$N2 <-  dt$N2
+    data_kriging$Abundance <-  rowSums(zoo_spe) 
     data_kriging$Year <- gsub("Year ", "", year)
     
     addWorksheet(wb, year)
-    writeData(wb, sheet = year, x = data_kriging)
-    saveWorkbook(wb, file = 'kriging_data.xlsx', overwrite = TRUE)
+    writeData(wb, sheet <-  year, x = data_kriging)
+    saveWorkbook(wb, file <-  'kriging_data.xlsx', overwrite = TRUE)
     combined_list[[year]] <- data_kriging
   }
   combined_all_years <- bind_rows(combined_list)
   
   addWorksheet(wb, "All Years")
-  writeData(wb, sheet = "All Years", x = combined_all_years)
-  saveWorkbook(wb, file = 'kriging_data.xlsx', overwrite = TRUE)
+  writeData(wb, sheet <-  "All Years", x =  combined_all_years)
+  saveWorkbook(wb, file <-  'kriging_data.xlsx', overwrite =  TRUE)
   
 }
 

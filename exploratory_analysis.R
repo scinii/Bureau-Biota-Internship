@@ -4,7 +4,7 @@ source('utils.R')
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2024"
+which_year <-  "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
@@ -21,18 +21,15 @@ zoo_env <- zoo_dataframes[[3]]
 
 ## ENVIRONMENTAL VARS ##
 
-zoo_env.t = zoo_env
-zoo_env.t$Conductivity = log(zoo_env$Conductivity)
-zoo_env.t$Temperature = log(zoo_env$Temperature)
-zoo_env.t$Depth = log(zoo_community$Depth)
+zoo_env.t <-  decostand(zoo_env, "standardize")
 
 ## SPECIES VARS ##
 
 max_var_box_cox(zoo_spe, zoo_env.t, c("Conductivity", "pH", "Temperature", 'Depth'), NA, TRUE)
 
-most_common_lambda =  sensitivity_analysis(zoo_spe, zoo_env.t, c("Conductivity", "pH", "Temperature", 'Depth'))
+most_common_lambda <- sensitivity_analysis(zoo_spe, zoo_env.t, c("Conductivity", "pH", "Temperature", 'Depth'))
 
-zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda[1])
+zoo_spe.trans <-  box_cox_trans(zoo_spe, most_common_lambda[1])
 
 
 ###### PLOTS ######
@@ -40,16 +37,12 @@ zoo_spe.trans = box_cox_trans(zoo_spe, most_common_lambda[1])
 missing_data(zoo_yearly,'env')
 missing_data(zoo_yearly, 'groups')
 
-plot_histogram(zoo_env['pH'])
+
 plot_histogram(zoo_env['Conductivity'])
+plot_histogram(zoo_env['pH'])
 plot_histogram(zoo_env['Temperature'])
 plot_histogram(zoo_env['Depth'])
-
-
-plot_histogram(zoo_env.t['pH'])
-plot_histogram(zoo_env.t['Conductivity'])
-plot_histogram(zoo_env.t['Temperature'])
-plot_histogram(zoo_env.t['Depth'])
+plot_histogram(zoo_community['Altitude'])
 
 
 plot_bubble_map(zoo_community, "pH")

@@ -33,44 +33,44 @@ split_rotifers_arthropodas <- function(df, which_group){
            - full_df's columns are the ones of the two dataframes just mentioned plus Depth, Drought, lat, lon and Altitude
   "
   
-  vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature','Depth', 'Drought', 'Counts', 'lat','lon','Altitude')
+  vars <-  c('Location', 'pH', 'DO', 'Conductivity', 'Temperature','Depth', 'Drought', 'Counts', 'lat','lon','Altitude')
   
   
   # select rotifers and aggregate the counts
-  vars_rotifers = c(vars, 'Phylum')
-  rotifers = df[df$Phylum == "Rotifera",][vars_rotifers]
-  rotifers = ddply(rotifers, vars_rotifers[vars_rotifers != 'Counts'] , summarize, Counts = sum(Counts))
-  rotifers = rename(rotifers, Phylum = Taxa)
+  vars_rotifers <-  c(vars, 'Phylum')
+  rotifers <-  df[df$Phylum == "Rotifera",][vars_rotifers]
+  rotifers <-  ddply(rotifers, vars_rotifers[vars_rotifers != 'Counts'] , summarize, Counts = sum(Counts))
+  rotifers <-  rename(rotifers, Phylum = Taxa)
   
   # select arthropodas and aggregate the counts of common groups
-  vars_arthropodas = c(vars, which_group)
-  arthropodas = df[!df$Phylum == "Rotifera",][vars_arthropodas] %>% drop_na(all_of(which_group))
-  arthropodas = ddply(arthropodas, vars_arthropodas[vars_arthropodas != 'Counts'], summarize, Counts = sum(Counts))
-  arthropodas = rename(arthropodas, Genus = Taxa)
+  vars_arthropodas <-  c(vars, which_group)
+  arthropodas <-  df[!df$Phylum == "Rotifera",][vars_arthropodas] %>% drop_na(all_of(which_group))
+  arthropodas <-  ddply(arthropodas, vars_arthropodas[vars_arthropodas != 'Counts'], summarize, Counts = sum(Counts))
+  arthropodas <-  rename(arthropodas, Genus = Taxa)
   
-  df = rbind(rotifers, arthropodas)
+  df <-  rbind(rotifers, arthropodas)
   
   
-  all_names = unique(df$Taxa)
+  all_names <-  unique(df$Taxa)
   
-  df = pivot_wider(df, names_from = Taxa, values_from = Counts, values_fill = 0) |>
+  df <-  pivot_wider(df, names_from = Taxa, values_from = Counts, values_fill = 0) |>
     as.data.frame()
   
-  full_df = df
+  full_df <-  df
   
   # create non environmental dataframe
-  non_env_df = dplyr::select(df,all_of(all_names))
+  non_env_df <-  dplyr::select(df,all_of(all_names))
   rownames(non_env_df) <- df$Location
   
   # create environmental dataframe
   env_df <- dplyr::select(df, -all_of(all_names))
   rownames(env_df) <- df$Location
-  env_df$Location = NULL
-  env_df$Drought = NULL
-  env_df$DO = NULL
-  env_df$Altitude = NULL
-  env_df$lat = NULL
-  env_df$lon = NULL
+  env_df$Location <-  NULL
+  env_df$Drought <-  NULL
+  env_df$DO <-  NULL
+  env_df$Altitude <-  NULL
+  env_df$lat <-  NULL
+  env_df$lon <-  NULL
   
   
   return(list(full_df,non_env_df,env_df))
@@ -89,20 +89,20 @@ get_community_data <- function(df, which_group){
   "
   
   
-  vars = c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
+  vars <-  c('Location', 'pH', 'DO', 'Conductivity', 'Temperature',
                   'Depth', 'Drought', 'Counts', 'lat','lon','Altitude',which_group)
   
-  df = df[ vars ] %>% drop_na(all_of(which_group))
+  df <-  df[ vars ] %>% drop_na(all_of(which_group))
   
-  var_to_summ = vars[vars != 'Counts'] 
-  df = ddply(df, var_to_summ, summarize, Counts = sum(Counts))
+  var_to_summ <-  vars[vars != 'Counts'] 
+  df <-  ddply(df, var_to_summ, summarize, Counts = sum(Counts))
   
-  all_names = unique(df[[which_group]])
+  all_names <-  unique(df[[which_group]])
 
-  df = pivot_wider(df, names_from = all_of(which_group), values_from = Counts, values_fill = 0) |>
+  df <-  pivot_wider(df, names_from = all_of(which_group), values_from = Counts, values_fill = 0) |>
       as.data.frame()
   
-  full_df = df
+  full_df <-  df
   
   # create non-environmental dataframe 
   non_env_df <- dplyr::select(df,all_of(all_names))
@@ -111,12 +111,12 @@ get_community_data <- function(df, which_group){
   # create environmental dataframe
   env_df <- dplyr::select(df, -all_of(all_names))
   rownames(env_df) <- df$Location
-  env_df$Location = NULL
-  env_df$Drought = NULL
-  env_df$DO = NULL
-  env_df$Altitude = NULL
-  env_df$lat = NULL
-  env_df$lon = NULL
+  env_df$Location <-  NULL
+  env_df$Drought <-  NULL
+  env_df$DO <-  NULL
+  env_df$Altitude <-  NULL
+  env_df$lat <-  NULL
+  env_df$lon <-  NULL
     
   return(list(full_df,non_env_df,env_df))
 
@@ -132,16 +132,16 @@ diversity_table <- function(df,vars){
   "
   
   
-  data_counts = df[vars]
+  data_counts <-  df[vars]
   N0 <- rowSums(data_counts>0)
   N1 <- exp( diversity(data_counts, index = "shannon") )
   N2 <- diversity(data_counts, index="invsimpson")
   E1 <- N1 / N0
   E2 <- N2 / N0
   diversity <- data.frame(N0,N1,N2,E1,E2)
-  diversity$lat = df$lat
-  diversity$lon = df$lon
-  diversity$Location = df$Location
+  diversity$lat <-  df$lat
+  diversity$lon <-  df$lon
+  diversity$Location <-  df$Location
   return(diversity)
   
 }
@@ -152,7 +152,7 @@ lakes_map <- function(){
   
   " Returns a map of the Kongsfjorden area and the location of the lakes "
   
-  lakes_location = read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
+  lakes_location <-  read.xlsx(xlsxFile = "data_lakes.xlsx", sheet = "locations")
   basemap(limits = c(11.5, 12.8, 78.8, 79),shapefiles = "Svalbard") + 
     theme(panel.background = element_rect(fill = "lightblue"),panel.ontop = FALSE) +
     geom_spatial_point(data = lakes_location, aes(x = lon, y = lat), color='red') + 
@@ -180,14 +180,14 @@ missing_data <- function(df, which_vars){
   "
   
   if(which_vars == 'env'){
-    df = df[c('pH','DO','Conductivity','Temperature','Depth')]
+    df <-  df[c('pH','DO','Conductivity','Temperature','Depth')]
   }
   else{
-    df = df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
+    df <-  df[c('Species','Genus', 'Family', 'Order', 'Class', 'Phylum')]
   }
   
   if(n_var_miss(df) > 0){
-    missing2 = vis_miss(df) +
+    missing2 <-  vis_miss(df) +
     theme(plot.title = element_text(hjust = 0.5))
     print(missing2)
   }
@@ -197,7 +197,7 @@ plot_histogram <- function(df){
   
   " This function generates a histogram and a box-plot in the same figure"
   
-  col_name = colnames(df)
+  col_name <-  colnames(df)
   
   plt1 <- ggplot(df,aes(x="", y = .data[[col_name]]  )) +
     geom_boxplot(fill = "lightblue", color = "black") + 
@@ -311,13 +311,13 @@ box_cox_trans <- function(raw_matrix, lambda){
   "
   
   if(lambda == 0){
-    transformed_data = log1p(raw_matrix)
+    transformed_data <-  log1p(raw_matrix)
   }
   else{
-    transformed_data = raw_matrix ** lambda
+    transformed_data <-  raw_matrix ** lambda
   }
   
-  transformed_data = decostand(transformed_data, "normalize")
+  transformed_data <-  decostand(transformed_data, "normalize")
   
   return (transformed_data)
   
@@ -334,26 +334,26 @@ max_var_box_cox <- function(raw_matrix, expl_matrix, variables, w_var, plot_bool
   :return: the lambda that maximizes the objective function.
   "
   
-  lambdas = seq(0,1,0.05)
+  lambdas <-  seq(0,1,0.05)
   
-  variances = vector( "numeric" , length(lambdas) )
-  max_variances = vector( "numeric" , length(lambdas) )
+  variances <-  vector( "numeric" , length(lambdas) )
+  max_variances <-  vector( "numeric" , length(lambdas) )
   
   for(i in 1:length(lambdas)){
     
-    transformed_data = box_cox_trans(raw_matrix, lambdas[i])
+    transformed_data <-  box_cox_trans(raw_matrix, lambdas[i])
     
     
     formula <- as.formula(paste("transformed_data", paste(variables, collapse = " + "), sep = " ~ "))
     
-    rda_model = rda(formula, expl_matrix)
+    rda_model <-  rda(formula, expl_matrix)
     
-    pca_model = rda(transformed_data)
+    pca_model <-  rda(transformed_data)
     
     
-    variances[i] = RsquareAdj(rda_model)$r.squared
+    variances[i] <-  RsquareAdj(rda_model)$r.squared
     
-    max_variances[i] = variances[i]/( sum(pca_model$CA$eig[1:length(variables)]) / sum(pca_model$CA$eig[1:length(pca_model$CA$eig)]) )
+    max_variances[i] <-  variances[i]/( sum(pca_model$CA$eig[1:length(variables)]) / sum(pca_model$CA$eig[1:length(pca_model$CA$eig)]) )
     
   }
   
@@ -384,12 +384,12 @@ sensitivity_analysis <- function(raw_matrix, expl_matrix, variables){
   "
   
   
-  w_var = seq(0,1,0.05)
-  best_lambdas = vector( "numeric" , length(w_var) )
+  w_var <-  seq(0,1,0.05)
+  best_lambdas <-  vector( "numeric" , length(w_var) )
   
   for(i in 1:length(w_var)){
     
-    best_lambdas[i] = max_var_box_cox(raw_matrix, expl_matrix, variables, w_var[i], FALSE)
+    best_lambdas[i] <-  max_var_box_cox(raw_matrix, expl_matrix, variables, w_var[i], FALSE)
     
   }
   

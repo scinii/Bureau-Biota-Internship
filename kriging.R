@@ -27,7 +27,7 @@ set.seed(0) # for reproducibility
 
 # FUNCTIONS FOR KRIGING #
 
-temporal_distancing = function(sf){
+temporal_distancing <-  function(sf){
   
   " 
   This function separates applies the separation method of the lakes form different
@@ -35,15 +35,15 @@ temporal_distancing = function(sf){
     
   "
   
-  distancing = seq(6,1)*1e5
+  distancing <-  seq(6,1)*1e5
   
-  years = seq(2018,2023)
+  years <-  seq(2018,2023)
   
   for(i in 1:6){
     
-    year = years[i]
+    year <-  years[i]
     
-    sf[sf$Year == year,]$geometry = sf[sf$Year == year,]$geometry + distancing[i]
+    sf[sf$Year == year,]$geometry <-  sf[sf$Year == year,]$geometry + distancing[i]
     
   }
   
@@ -61,50 +61,50 @@ lassoKrigingPrediction = function(train, test, what_to_predict, plot_bool){
   # Return: a list with rmse,smape scores and the fitted lasso model
 
   
-  results_lasso = array(1:2)
-  results_kriging = array(1:2)
+  results_lasso <-  array(1:2)
+  results_kriging <-  array(1:2)
   
-  matrixCovariates = as.matrix(as.data.frame(train)[,1:5])
+  matrixCovariates <-  as.matrix(as.data.frame(train)[,1:5])
   
-  matrixTarget = train[[what_to_predict]]
+  matrixTarget <-  train[[what_to_predict]]
   
-  testCovariates = as.matrix(as.data.frame(test)[,1:5])
+  testCovariates <-  as.matrix(as.data.frame(test)[,1:5])
   
-  testCovariates = scale(testCovariates, center = apply(matrixCovariates,2,mean), scale = apply(matrixCovariates,2,sd))
+  testCovariates <-  scale(testCovariates, center = apply(matrixCovariates,2,mean), scale = apply(matrixCovariates,2,sd))
   
-  matrixCovariates = scale(matrixCovariates)
+  matrixCovariates <-  scale(matrixCovariates)
   
   
-  cv = cv.glmnet(matrixCovariates, matrixTarget, alpha = 1, grouped = FALSE) 
+  cv <-  cv.glmnet(matrixCovariates, matrixTarget, alpha = 1, grouped = FALSE) 
   
-  bestLambda = cv$lambda.min
+  bestLambda <-  cv$lambda.min
   
-  bestModel = glmnet(matrixCovariates, matrixTarget, alpha = 1, lambda = bestLambda,standardize = FALSE)
+  bestModel <-  glmnet(matrixCovariates, matrixTarget, alpha = 1, lambda = bestLambda,standardize = FALSE)
   
-  residuals = matrixTarget - predict(bestModel, s=bestLambda, newx =matrixCovariates ) # calculate the residuals from lasso 
+  residuals <-  matrixTarget - predict(bestModel, s=bestLambda, newx =matrixCovariates ) # calculate the residuals from lasso 
   
   if(plot_bool == TRUE){
     hist(residuals)
     qqPlot(residuals)
   }
   
-  train$resid = residuals
+  train$resid <-  residuals
   
   best_variogram <- autofitVariogram(resid ~ 1, train)
   
-  residKriged = krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
+  residKriged <-  krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
   
-  lasso_prediciton = predict(bestModel,s=bestLambda, newx = testCovariates)
+  lasso_prediciton <-  predict(bestModel,s=bestLambda, newx = testCovariates)
   
-  test$predi = lasso_prediciton + residKriged$var1.pred
+  test$predi <-  lasso_prediciton + residKriged$var1.pred
   
-  test_true = test[[what_to_predict]] 
+  test_true <-  test[[what_to_predict]] 
   
-  results_lasso[1] = Metrics::rmse( lasso_prediciton,test_true)
-  results_lasso[2] = Metrics::smape( lasso_prediciton,test_true)  
+  results_lasso[1] <-  Metrics::rmse( lasso_prediciton,test_true)
+  results_lasso[2] <-  Metrics::smape( lasso_prediciton,test_true)  
   
-  results_kriging[1] = Metrics::rmse( test$predi,test_true)
-  results_kriging[2] = Metrics::smape( test$predi,test_true)  
+  results_kriging[1] <-  Metrics::rmse( test$predi,test_true)
+  results_kriging[2] <-  Metrics::smape( test$predi,test_true)  
   
   
   return(list(results_kriging, results_lasso,bestModel))
@@ -121,22 +121,22 @@ bayesianlinearKrigingPrediction = function(train, test, what_to_predict, plot_bo
   # Return: a list with rmse,smape scores and the fitted linear model
   
   
-  results_lasso = array(1:2)
-  results_kriging = array(1:2)
+  results_bayesian <-  array(1:2)
+  results_kriging <-  array(1:2)
   
-  matrixCovariates = as.matrix(as.data.frame(train)[,1:5])
+  matrixCovariates <-  as.matrix(as.data.frame(train)[,1:5])
   
-  matrixTarget = train[[what_to_predict]]
+  matrixTarget <-  train[[what_to_predict]]
   
-  testCovariates = as.matrix(as.data.frame(test)[,1:5])
+  testCovariates <-  as.matrix(as.data.frame(test)[,1:5])
   
-  testCovariates = scale(testCovariates, center = apply(matrixCovariates,2,mean), scale = apply(matrixCovariates,2,sd))
+  testCovariates <-  scale(testCovariates, center = apply(matrixCovariates,2,mean), scale = apply(matrixCovariates,2,sd))
   
-  matrixCovariates = scale(matrixCovariates) %>% as.data.frame()
+  matrixCovariates <-  scale(matrixCovariates) %>% as.data.frame()
   
   linear_model <- stan_glm(matrixTarget ~., data = matrixCovariates, seed=42)
   
-  residuals = matrixTarget - predict(linear_model, newx = matrixCovariates ) #
+  residuals <-  matrixTarget - predict(linear_model, newx = matrixCovariates ) #
   
   print(plot(linear_model, plotfun = "trace"))
   print(summary(linear_model))
@@ -148,26 +148,26 @@ bayesianlinearKrigingPrediction = function(train, test, what_to_predict, plot_bo
     
   }
   
-  train$resid = residuals
+  train$resid <-  residuals
   
   best_variogram <- autofitVariogram(resid ~ 1, train)
   
-  residKriged = krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
+  residKriged <-  krige(resid ~ 1,locations = train,newdata = test,model = best_variogram$var_model,beta = 0)
   
-  bayesian_prediciton = predict(linear_model, newdata = as.data.frame(testCovariates))
+  bayesian_prediciton <-  predict(linear_model, newdata = as.data.frame(testCovariates))
   
-  test$predi = bayesian_prediciton + residKriged$var1.pred
+  test$predi <-  bayesian_prediciton + residKriged$var1.pred
   
-  test_true = test[[what_to_predict]] 
+  test_true <-  test[[what_to_predict]] 
   
-  results_bayesian[1] = Metrics::rmse( bayesian_prediciton,test_true)
-  results_bayesian[2] = Metrics::smape( bayesian_prediciton,test_true)  
+  results_bayesian[1] <-  Metrics::rmse( bayesian_prediciton,test_true)
+  results_bayesian[2] <-  Metrics::smape( bayesian_prediciton,test_true)  
   
-  results_kriging[1] = Metrics::rmse( test$predi,test_true)
-  results_kriging[2] = Metrics::smape( test$predi,test_true)  
+  results_kriging[1] <-  Metrics::rmse( test$predi,test_true)
+  results_kriging[2] <-  Metrics::smape( test$predi,test_true)  
   
   
-  return(list(results_kriging, results_lasso,linear_model))
+  return(list(results_kriging, results_bayesian,linear_model))
   
 }
 
@@ -175,29 +175,39 @@ bayesianlinearKrigingPrediction = function(train, test, what_to_predict, plot_bo
 
 # KRIGING #
 
-kriging_data = read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "All Years") 
+kriging_data <-  read.xlsx(xlsxFile = "kriging_data.xlsx", sheet = "All Years") 
 
-miced_data = mice(kriging_data)
-kriging_data = complete(miced_data) # impute missing data
+miced_data <-  mice(kriging_data)
+kriging_data <-  complete(miced_data) # impute missing data
 
-kriging_data.sf = st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
-kriging_data.sf = st_transform(kriging_data.sf , crs = 3995)
+kriging_data.sf <-  st_as_sf(kriging_data,coords = c('lon','lat'), crs=4326)
+kriging_data.sf <-  st_transform(kriging_data.sf , crs = 3995)
 
 
-kriging_data.sf = temporal_distancing(kriging_data.sf)
+kriging_data.sf <-  temporal_distancing(kriging_data.sf)
 
 block_initial <- spatial_initial_split(kriging_data.sf,prop = 0.2, spatial_block_cv)
 
-train_sf = training(block_initial)
+train_sf <-  training(block_initial)
 
-test_sf = testing(block_initial)
+test_sf <-  testing(block_initial)
 
 
-krig_N1 = lassoKrigingPrediction(train_sf, test_sf, "N1", TRUE)
-coef(krig_N1[[3]])
+krig_lasso_N1 <-  lassoKrigingPrediction(train_sf, test_sf, "N1", TRUE)
+coef(krig_lasso_N1[[3]])
 
-krig_N2 = lassoKrigingPrediction(train_sf, test_sf, "N2", TRUE)
-coef(krig_N2[[3]])
+krig_lasso_N2 <-  lassoKrigingPrediction(train_sf, test_sf, "N2", TRUE)
+coef(krig_lasso_N1[[3]])
+
+
+
+krig_blm_N1 <-  bayesianlinearKrigingPrediction(train_sf, test_sf, "N1", TRUE)
+
+
+krig_blm_N2 <-  bayesianlinearKrigingPrediction(train_sf, test_sf, "N2", TRUE)
+
+
+
 
 
 

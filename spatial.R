@@ -9,7 +9,7 @@ library(adespatial)
 
 ############ GET YEARLY DATA ############
 
-which_year = "Year 2024"
+which_year <-  "Year 2024"
 
 zoo_yearly <- read.xlsx(xlsxFile = "yearly_data.xlsx", sheet = which_year)
 
@@ -26,46 +26,43 @@ zoo_xy <- zoo_community[c('lon','lat')]
 
 # convert coordinates to have them in meters
 
-zoo_xy = st_as_sf(zoo_xy,coords = c('lon','lat'), crs=4326)
+zoo_xy <-  st_as_sf(zoo_xy,coords = c('lon','lat'), crs=4326)
 
-zoo_xy = st_transform(zoo_xy , crs = 3995)
+zoo_xy <-  st_transform(zoo_xy , crs = 3995)
 
-zoo_xy$X = st_coordinates(zoo_xy)[,1]
-zoo_xy$Y = st_coordinates(zoo_xy)[,2]
-zoo_xy$geometry = NULL
-zoo_xy = scale(zoo_xy, center = TRUE, scale = FALSE) %>% as_data_frame()
+zoo_xy$X <-  st_coordinates(zoo_xy)[,1]
+zoo_xy$Y <-  st_coordinates(zoo_xy)[,2]
+zoo_xy$geometry <-  NULL
+zoo_xy <-  scale(zoo_xy, center = TRUE, scale = FALSE) %>% as_data_frame()
 
-zoo_xyz = zoo_xy
-zoo_xyz$z = zoo_community$Altitude
+zoo_xyz <-  zoo_xy
+zoo_xyz$z <-  zoo_community$Altitude
 
 
 # Data transformation
 
-zoo_env.t = zoo_env
-zoo_env.t$Conductivity = log(zoo_env$Conductivity)
-zoo_env.t$Temperature = log(zoo_env$Temperature)
-zoo_env.t$Depth = log(zoo_community$Depth)
+zoo_env.t <-  decostand(zoo_env, "standardize")
 
-zoo_spe.trans = box_cox_trans(zoo_spe, 0.8)
+zoo_spe.trans <-  box_cox_trans(zoo_spe, 1)
 
 
 #### TREND SURFACE ANALYSIS ####
 
-zoo_poly = poly(as.matrix(zoo_xyz), degree = 2, raw = FALSE)
+zoo_poly <-  poly(as.matrix(zoo_xyz), degree = 2, raw = FALSE)
 colnames(zoo_poly) <-  c("X", "X2", "Y", "XY", "Y2", "Z","ZX", "ZY","Z2")
-(zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly)))
+zoo_rda_poly <- rda(zoo_spe.trans ~ ., data =as.data.frame(zoo_poly))
 
-(zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.1, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared))
+zoo_rda.fwd <- forward.sel(zoo_spe.trans, zoo_poly , alpha = 0.1, nperm = 9999, R2thresh = RsquareAdj(zoo_rda_poly)$r.squared)
 
-(zoo_trend <- rda(zoo_spe.trans ~ .,as.data.frame(zoo_poly)[ ,zoo_rda.fwd[ ,2]] ))
+zoo_trend <- rda(zoo_spe.trans ~ .,as.data.frame(zoo_poly)[ ,zoo_rda.fwd[ ,2]] )
 
 summary(zoo_trend)
 anova(zoo_trend)
 anova(zoo_trend, by = "axis")
 
 
-spe_pca = rda(zoo_spe.trans)
-p_max_explainable_var = RsquareAdj(zoo_trend)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
+spe_pca <-  rda(zoo_spe.trans)
+p_max_explainable_var <-  RsquareAdj(zoo_trend)$r.squared / ( sum(spe_pca$CA$eig[1:3]) / sum(spe_pca$CA$eig[1:5]) )
 
 
 trend_scores <-  scores(zoo_trend , choices = 1:2, display = "lc", scaling = 1)
@@ -86,8 +83,8 @@ plot.links(zoo_xy, dist(zoo_xyz), thresh =1233)
 
 # First detrend and compute the correlogram
 
-residuals = resid(lm(as.matrix(zoo_spe.trans) ~ XY + ZX + Y2, data = zoo_poly))
-(correlogram = mantel.correlog(dist(residuals), D.geo = dist(zoo_xyz), nperm = 9999, r.type="spearman"))
+residuals <-  resid(lm(as.matrix(zoo_spe.trans) ~ XY + ZX + Y2, data = zoo_poly))
+(correlogram <-  mantel.correlog(dist(residuals), D.geo = dist(zoo_xyz), nperm = 9999, r.type="spearman"))
 summary(correlogram)
 plot(correlogram)
 
